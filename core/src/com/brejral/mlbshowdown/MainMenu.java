@@ -17,6 +17,7 @@ public class MainMenu implements Screen {
 	FreeTypeFontParameter fontParameter;
 	BitmapFont aeroDisplayItalicFont72;
 	BitmapFont aeroDisplayItalicFont36;
+	List<MenuItem> menuList;
 	
 	public MainMenu(final MLBShowdown showdown) {
 		mlbShowdown = showdown;
@@ -28,6 +29,14 @@ public class MainMenu implements Screen {
 		aeroDisplayItalicFont72 = generator.generateFont(fontParameter);
 		fontParameter.size = 36;
 		aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
+		menuList = new ArrayList<MenuItem>();
+		menuList.Add(new MenuItem("Exhibition", 800);
+		menuList.Add(new MenuItem("Season", 750);
+		menuList.Add(new MenuItem("Tournament", 700);
+		menuList.Add(new MenuItem("Management", 650);
+		menuList.Add(new MenuItem("Statistics", 600);
+		menuList.Add(new MenuItem("Settings", 550);
+		
 	}
 	
 	@Override
@@ -37,9 +46,28 @@ public class MainMenu implements Screen {
 		batch.begin();
 		batch.setColor(1, 1, 1, .5f);
 		batch.draw(backgroundTexture, 0, 0);
-		aeroDisplayItalicFont72.draw(batch, "MLB Showdown 2014", 10, 890);
-		aeroDisplayItalicFont36.draw(batch, "Exhibition", 50, 800);
+		drawMenuText();
 		batch.end();
+	}
+	
+	private void drawMenuText() {
+		aeroDisplayItalicFont72.draw(batch, "MLB Showdown 2014", 10, 890);
+		for (Iterator<MenuItem> i = menuList.iterator(); i.HasNext(); ) {
+			MenuItem item = i.next();
+			if (item.isHighlighted()) {
+				batch.setColor(1, 1, 0, 1);
+			} else {
+				batch.setColor(1, 1, 1, 1);
+			}
+			aeroDisplayItalicFont36.draw(batch, item.text, 50, item.positionY);
+		}
+		aeroDisplayItalicFont36.draw(batch, "Exhibition", 50, 800);
+		aeroDisplayItalicFont36.draw(batch, "Season", 50, 750);
+		aeroDisplayItalicFont36.draw(batch, "Tournament", 50, 700);
+		aeroDisplayItalicFont36.draw(batch, "Management", 50, 650);
+		aeroDisplayItalicFont36.draw(batch, "Statistics", 50, 600);
+		aeroDisplayItalicFont36.draw(batch, "Settings", 50, 550);
+		
 	}
 
 	@Override
@@ -74,7 +102,25 @@ public class MainMenu implements Screen {
 
 	@Override
 	public void dispose() {
+		backgroundTexture.dispose();
+		fontParameter.dispose();
+		aeroDisplayItalicFont72.dispose();
+		aeroDisplayItalicFont36.dispose();
+		batch.dispose();
 		generator.dispose();
 	}
 
+	public class MenuItem {
+		String text;
+		int positionY;
+		
+		public MenuItem(String str, int y) {
+			this.text = str;
+			this.positionY = y;
+		}
+		
+		public boolean isHighlighted() {
+			
+		}
+	}
 }
