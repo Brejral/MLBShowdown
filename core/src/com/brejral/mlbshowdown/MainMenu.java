@@ -43,11 +43,14 @@ public class MainMenu implements Screen {
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		
 		batch.begin();
 		batch.setColor(1, 1, 1, .5f);
 		batch.draw(backgroundTexture, 0, 0);
 		drawMenuText();
 		batch.end();
+		
+		processUserInput();
 	}
 	
 	private void drawMenuText() {
@@ -61,12 +64,10 @@ public class MainMenu implements Screen {
 			}
 			aeroDisplayItalicFont36.draw(batch, item.text, 50, item.positionY);
 		}
-		aeroDisplayItalicFont36.draw(batch, "Exhibition", 50, 800);
-		aeroDisplayItalicFont36.draw(batch, "Season", 50, 750);
-		aeroDisplayItalicFont36.draw(batch, "Tournament", 50, 700);
-		aeroDisplayItalicFont36.draw(batch, "Management", 50, 650);
-		aeroDisplayItalicFont36.draw(batch, "Statistics", 50, 600);
-		aeroDisplayItalicFont36.draw(batch, "Settings", 50, 550);
+		
+	}
+	
+	private void processUserInput() {
 		
 	}
 
