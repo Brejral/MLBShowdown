@@ -2,9 +2,12 @@ package com.brejral.mlbshowdown;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.brejral.mlbshowdown.menu.MainMenu;
 
 public class MLBShowdown extends Game {
-	SpriteBatch batch;
+	public SpriteBatch batch;
+	public final int screenSizeX = 600;
+	public final int screenSizeY = 900;
 	
 	@Override
 	public void create () {
