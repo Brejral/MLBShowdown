@@ -37,7 +37,10 @@ public class GameScreen implements Screen {
 		slantCardFont = slantGenerator.generateFont(fontParameter);
 		fontParameter.size = 37;
 		slantCardFont2 = slantGenerator.generateFont(fontParameter);
-		testCard = new Batter("Mike Trout", "mike_trout.png");
+		testCard = new Batter(1);
+		testCard.posX = 45;
+		testCard.posY = 95;
+		testCard.scale = 1f;
 		backgroundTexture = new Texture(Gdx.files.internal("images/baseball_diamond.png"));
 	}
 	
@@ -51,18 +54,18 @@ public class GameScreen implements Screen {
 		testCard.draw(batch);
 		batch.end();
 		
-		if (testCard.scale > .35f && !add) {
-			testCard.scale -= .02f;
-			if (testCard.scale <= .35f) {
-				add = true;
-			}
-		}
-		if (testCard.scale < 1f && add) {
-			testCard.scale += .02f;
-			if (testCard.scale >= 1f) {
-				add = false;
-			}
-		}
+//		if (testCard.scale > .35f && !add) {
+//			testCard.scale -= .005f;
+//			if (testCard.scale <= .35f) {
+//				add = true;
+//			}
+//		}
+//		if (testCard.scale < 1f && add) {
+//			testCard.scale += .005f;
+//			if (testCard.scale >= 1f) {
+//				add = false;
+//			}
+//		}
 	}
 
 	@Override
