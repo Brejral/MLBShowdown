@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.brejral.mlbshowdown.MLBShowdown;
-import com.brejral.mlbshowdown.card.Batter;
+import com.brejral.mlbshowdown.card.Card;
 
 public class GameScreen implements Screen {
 	SpriteBatch batch;
@@ -22,7 +22,7 @@ public class GameScreen implements Screen {
 	BitmapFont straightCardFont2;
 	BitmapFont slantCardFont;
 	BitmapFont slantCardFont2;
-	Batter testCard;
+	Card testCard;
 	Texture backgroundTexture;
 	boolean add;
 		
@@ -37,7 +37,7 @@ public class GameScreen implements Screen {
 		slantCardFont = slantGenerator.generateFont(fontParameter);
 		fontParameter.size = 37;
 		slantCardFont2 = slantGenerator.generateFont(fontParameter);
-		testCard = new Batter(1);
+		testCard = new Card(showdown.showdownDB, 1);
 		testCard.posX = 45;
 		testCard.posY = 95;
 		testCard.scale = 1f;
@@ -54,18 +54,18 @@ public class GameScreen implements Screen {
 		testCard.draw(batch);
 		batch.end();
 		
-//		if (testCard.scale > .35f && !add) {
-//			testCard.scale -= .005f;
-//			if (testCard.scale <= .35f) {
-//				add = true;
-//			}
-//		}
-//		if (testCard.scale < 1f && add) {
-//			testCard.scale += .005f;
-//			if (testCard.scale >= 1f) {
-//				add = false;
-//			}
-//		}
+		if (testCard.scale > .35f && !add) {
+			testCard.scale -= .005f;
+			if (testCard.scale <= .35f) {
+				add = true;
+			}
+		}
+		if (testCard.scale < 1f && add) {
+			testCard.scale += .005f;
+			if (testCard.scale >= 1f) {
+				add = false;
+			}
+		}
 	}
 
 	@Override
