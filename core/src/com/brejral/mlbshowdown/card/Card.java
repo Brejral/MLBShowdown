@@ -23,7 +23,8 @@ public class Card {
 	public float scale;
 	public int onbase, control, ip, speed, posX, posY, cardnum, id, points, posBonus1, posBonus2;
 	public int[] chart = new int[10];
-	public FreeTypeFontGenerator straightGenerator;
+	public FreeTypeFontGenerator obcGenerator;
+	public FreeTypeFontGenerator chartGenerator;
 	public FreeTypeFontGenerator slantGenerator;
 	public FreeTypeFontParameter nameFontParameter;
 	public FreeTypeFontParameter obcFontParameter;
@@ -31,23 +32,30 @@ public class Card {
 	public BitmapFont nameFont;
 	public BitmapFont obcFont;
 	public BitmapFont chartFont;
+	public BitmapFont cnFont;
 	
 	public Card(Database database, int iden) {
 		db = database;
 		id = iden;
 		populateFieldsFromDB();
 		backgroundTexture = new Texture(Gdx.files.internal("images/" + image));
-		straightGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Muro.ttf"));
+		obcGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Muro.ttf"));
+		chartGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/US101.TTF"));
 		slantGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Muroslant.ttf"));
 		nameFontParameter = new FreeTypeFontParameter();
 		nameFontParameter.size = 39;
 		nameFont = slantGenerator.generateFont(nameFontParameter);
 		chartFontParameter = new FreeTypeFontParameter();
 		chartFontParameter.size = 18;
-		chartFont = straightGenerator.generateFont(chartFontParameter);
+		chartFont = chartGenerator.generateFont(chartFontParameter);
+		chartFontParameter.size = 15;
+		cnFont = chartGenerator.generateFont(chartFontParameter);
 		obcFontParameter = new FreeTypeFontParameter();
 		obcFontParameter.size = 45;
-		obcFont = straightGenerator.generateFont(obcFontParameter);
+		if (cardType.equals("Pitcher")) {
+			obcFontParameter.size -= 5;
+		}
+		obcFont = obcGenerator.generateFont(obcFontParameter);
 		createTexture();
 	}
 	
@@ -73,12 +81,12 @@ public class Card {
 				break;
 			case "Pitcher":
 				throwHand = cursor.getString(10);
-				speed = cursor.getInt(11);
-				onbase = cursor.getInt(12);
+				ip = cursor.getInt(11);
+				control = cursor.getInt(12);
 				break;
 			}
 			icons = cursor.getString(13);
-			if (cardType == "Batter" || cardType == "Pitcher") {
+			if (cardType.equals("Batter") || cardType.equals("Pitcher")) {
 				for (int i = 0; i < 10; i++) {
 					chart[i] = cursor.getInt(14+i);
 				}
@@ -120,7 +128,7 @@ public class Card {
 
 	private void createPitcherTexture() {
 		SpriteBatch batch = new SpriteBatch();
-		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
+		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, 510, 710, false);
 		cardTexture = new TextureRegion(fbo.getColorBufferTexture(), 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		cardTexture.flip(false, true);
 		
@@ -128,7 +136,7 @@ public class Card {
 		
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		
+		batch.getProjectionMatrix().setToOrtho2D(0, 0, fbo.getWidth(), fbo.getHeight());
 		batch.begin();
 		
 		batch.setBlendFunction(-1, -1);
@@ -141,6 +149,25 @@ public class Card {
 
 		drawNameText(batch);
 		
+		//Draw the control text
+		int ctx, cty;
+		String cntrlString = "+" + control;
+		ctx = 45 - (int)obcFont.getBounds(cntrlString).width/2;
+		cty = 189;
+		obcFont.setColor(Color.BLACK);
+		obcFont.draw(batch, cntrlString, ctx-1, cty-1);
+		obcFont.draw(batch, cntrlString, ctx,   cty-1);
+		obcFont.draw(batch, cntrlString, ctx-1, cty+1);
+		obcFont.draw(batch, cntrlString, ctx,   cty+1);
+		obcFont.draw(batch, cntrlString, ctx-1, cty);
+		obcFont.draw(batch, cntrlString, ctx+1, cty-1);
+		obcFont.draw(batch, cntrlString, ctx+1, cty);
+		obcFont.draw(batch, cntrlString, ctx+1, cty+1);
+		obcFont.setColor(Color.RED);
+		obcFont.draw(batch, cntrlString, ctx, cty);
+		
+		drawPitcherChartText(batch);
+		
 		batch.end();
 		
 		fbo.end();
@@ -148,7 +175,7 @@ public class Card {
 
 	private void createBatterTexture () {
 		SpriteBatch batch = new SpriteBatch();
-		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
+		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, 510, 710, false);
 		cardTexture = new TextureRegion(fbo.getColorBufferTexture(), 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		cardTexture.flip(false, true);
 		
@@ -156,7 +183,7 @@ public class Card {
 		
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		
+		batch.getProjectionMatrix().setToOrtho2D(0, 0, fbo.getWidth(), fbo.getHeight());
 		batch.begin();
 		
 		batch.setBlendFunction(-1, -1);
@@ -186,17 +213,125 @@ public class Card {
 		obcFont.setColor(Color.RED);
 		obcFont.draw(batch, obString, obtx, obty);
 		
-		//Draw the chart text
-		int ctx, cty;
-		ctx = 105;
-		cty = 145;
-		chartFont.setColor(Color.WHITE);
-		String ptString = Integer.toString(points) + " PT.";
-		chartFont.draw(batch, ptString, ctx, cty);
+		drawBatterChartText(batch);
 		
 		batch.end();
 		
 		fbo.end();
+	}
+	
+	private void drawBatterChartText(SpriteBatch batch) {
+		//Draw the chart text
+		chartFont.setColor(Color.WHITE);
+		int ctx, cty;
+		ctx = 105;
+		cty = 145;
+		String ptString = points + " PT.";
+		chartFont.draw(batch, ptString, ctx, cty);
+		
+		ctx += (int)chartFont.getBounds(ptString).width + 20;
+		StringBuilder builder = new StringBuilder("SPEED ");
+		if (speed >= 18) {
+			builder.append("A (");
+		} else if (speed >= 13) {
+			builder.append("B (");
+		} else {
+			builder.append("C (");
+		}
+		builder.append(speed + ")");
+		String speedString = builder.toString();
+		chartFont.draw(batch, speedString, ctx, cty);
+		
+		ctx += (int)chartFont.getBounds(speedString).width + 20;
+		String batsString = "BATS " + bats;
+		chartFont.draw(batch, batsString, ctx, cty);
+		
+		ctx += (int)chartFont.getBounds(batsString).width + 20;
+		String position1String = pos1 + " + " + posBonus1;
+		chartFont.draw(batch, position1String, ctx, cty);
+		
+		if (pos2 != null) {
+			ctx += (int)chartFont.getBounds(position1String).width + 20;
+			String position2String = pos2 + " + " + posBonus2;
+			chartFont.draw(batch, position2String, ctx, cty);
+		}
+		
+		// Draw the chart text and results
+		cty -= 25;
+		ctx = 47;
+		int startNum = 1;
+		String resultString = null;
+		for (int i = 0; i < chart.length; i++) {
+			if (i != 0) {
+				if (i == 9) {
+					resultString = chart[i] + "+";
+				} else if (chart[i] == startNum) {
+					resultString = Integer.toString(chart[i]);
+				} else if (chart[i] > startNum) {
+					resultString = startNum + "---" + chart[i];
+				} else {
+					resultString = "---";
+				}
+				int strLen = (int)chartFont.getBounds(resultString).width;
+				chartFont.draw(batch, resultString, ctx - strLen/2, cty);
+				strLen = (int)chartFont.getBounds(CardConstants.CHART_TEXT[i]).width;
+				chartFont.draw(batch, CardConstants.CHART_TEXT[i], ctx - strLen/2, cty - 25);
+				startNum = chart[i] + 1;
+				ctx += 52;
+			}
+		}
+		
+		drawCardNumText(batch);
+		
+	}
+	
+	private void drawPitcherChartText(SpriteBatch batch) {
+		//Draw the chart text
+				chartFont.setColor(Color.WHITE);
+				int ctx, cty;
+				ctx = 105;
+				cty = 145;
+				String ptString = points + " PT.";
+				chartFont.draw(batch, ptString, ctx, cty);
+				
+				ctx += (int)chartFont.getBounds(ptString).width + 20;
+				String position1String = pos1;
+				chartFont.draw(batch, position1String, ctx, cty);
+				
+				ctx += (int)chartFont.getBounds(position1String).width + 20;
+				String throwsString = throwHand + "HP";
+				chartFont.draw(batch, throwsString, ctx, cty);
+				
+				ctx += (int)chartFont.getBounds(throwsString).width + 20;
+				String speedString = "IP " + ip;
+				chartFont.draw(batch, speedString, ctx, cty);
+				
+				// Draw the chart text and results
+				cty -= 25;
+				ctx = 52;
+				int startNum = 1;
+				String resultString = null;
+				for (int i = 0; i < chart.length; i++) {
+					if (i != 6 && i != 8) {
+						if (i == 9) {
+							resultString = chart[i] + "+";
+						} else if (chart[i] == startNum) {
+							resultString = Integer.toString(chart[i]);
+						} else if (chart[i] > startNum) {
+							resultString = startNum + "---" + chart[i];
+						} else {
+							resultString = "---";
+						}
+						int strLen = (int)chartFont.getBounds(resultString).width;
+						chartFont.draw(batch, resultString, ctx - strLen/2, cty);
+						strLen = (int)chartFont.getBounds(CardConstants.CHART_TEXT[i]).width;
+						chartFont.draw(batch, CardConstants.CHART_TEXT[i], ctx - strLen/2, cty - 25);
+						startNum = chart[i] + 1;
+						ctx += 58;
+					}
+				}
+				
+				drawCardNumText(batch);
 	}
 	
 	private void drawNameText(SpriteBatch batch) {
@@ -214,7 +349,20 @@ public class Card {
 		nameFont.draw(batch, name, ntx+1, nty+1);
 		nameFont.setColor(Color.WHITE);
 		nameFont.draw(batch, name, ntx, nty);
-		
+	}
+	
+	private void drawCardNumText(SpriteBatch batch) {
+		// Draw the year and the card number
+		if (cardnum != 0) {
+			int ctx = 420;
+			int cty = 73;
+			String cardnumString = Integer.toString(cardnum);
+			String yearString = cardnumString.substring(0, 2);
+			String numString = cardnumString.substring(2, 5);
+			String yearNumString = numString + "          " + "'" + yearString;
+			cnFont.draw(batch, yearNumString, ctx, cty);
+		}
+
 	}
 	
 }

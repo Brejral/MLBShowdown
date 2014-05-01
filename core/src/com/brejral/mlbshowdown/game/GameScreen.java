@@ -37,16 +37,16 @@ public class GameScreen implements Screen {
 		slantCardFont = slantGenerator.generateFont(fontParameter);
 		fontParameter.size = 37;
 		slantCardFont2 = slantGenerator.generateFont(fontParameter);
-		testCard = new Card(showdown.showdownDB, 1);
-		testCard.posX = 45;
-		testCard.posY = 95;
-		testCard.scale = 1f;
+		testCard = new Card(showdown.showdownDB, 10);
+		testCard.posX = 450 - (int)(.8f*255);
+		testCard.posY = 15;
+		testCard.scale = .8f;
 		backgroundTexture = new Texture(Gdx.files.internal("images/baseball_diamond.png"));
 	}
 	
 	@Override
 	public void render(float delta) {
-		Gdx.gl.glClearColor(0, 0, 0, 1);
+		Gdx.gl.glClearColor(73, 145, 94, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
 		batch.begin();
@@ -54,18 +54,18 @@ public class GameScreen implements Screen {
 		testCard.draw(batch);
 		batch.end();
 		
-		if (testCard.scale > .35f && !add) {
-			testCard.scale -= .005f;
-			if (testCard.scale <= .35f) {
-				add = true;
-			}
-		}
-		if (testCard.scale < 1f && add) {
-			testCard.scale += .005f;
-			if (testCard.scale >= 1f) {
-				add = false;
-			}
-		}
+//		if (testCard.scale > .35f && !add) {
+//			testCard.scale -= .005f;
+//			if (testCard.scale <= .35f) {
+//				add = true;
+//			}
+//		}
+//		if (testCard.scale < .75f && add) {
+//			testCard.scale += .005f;
+//			if (testCard.scale >= 1f) {
+//				add = false;
+//			}
+//		}
 	}
 
 	@Override

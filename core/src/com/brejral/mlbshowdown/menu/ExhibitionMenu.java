@@ -35,7 +35,7 @@ public class ExhibitionMenu implements Screen {
 		
 		batch.begin();
 		aeroDisplayItalicFont36.setColor(Color.WHITE);
-		aeroDisplayItalicFont36.draw(batch, "ExhibitionMenu", 10, 890);
+		aeroDisplayItalicFont36.draw(batch, "ExhibitionMenu", 10, 590);
 		batch.end();
 		
 		if (Gdx.input.isKeyPressed(Keys.SPACE)) {
