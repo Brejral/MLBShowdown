@@ -38,12 +38,12 @@ public class MainMenu implements Screen {
 		fontParameter.size = 36;
 		aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
 		menuList = new ArrayList<MenuItem>();
-		menuList.add(new MenuItem("Exhibition", 800, new ExhibitionMenu(mlbShowdown)));
-		menuList.add(new MenuItem("Season", 750));
-		menuList.add(new MenuItem("Tournament", 700));
-		menuList.add(new MenuItem("Management", 650));
-		menuList.add(new MenuItem("Statistics", 600));
-		menuList.add(new MenuItem("Settings", 550));
+		menuList.add(new MenuItem("Exhibition", 500, new ExhibitionMenu(mlbShowdown)));
+		menuList.add(new MenuItem("Season", 450));
+		menuList.add(new MenuItem("Tournament", 400));
+		menuList.add(new MenuItem("Management", 350));
+		menuList.add(new MenuItem("Statistics", 300));
+		menuList.add(new MenuItem("Settings", 250));
 		
 	}
 	
@@ -62,7 +62,7 @@ public class MainMenu implements Screen {
 	}
 	
 	private void drawMenuText() {
-		aeroDisplayItalicFont72.draw(batch, "MLB Showdown 2014", 10, 890);
+		aeroDisplayItalicFont72.draw(batch, "MLB Showdown 2014", 10, 590);
 		for (Iterator<MenuItem> i = menuList.iterator(); i.hasNext(); ) {
 			MenuItem item = i.next();
 			if (item.isHighlighted()) {
@@ -148,7 +148,7 @@ public class MainMenu implements Screen {
 		
 		public boolean isHighlighted() {
 			int posX = Gdx.input.getX();
-			int posY = mlbShowdown.screenSizeY - Gdx.input.getY();
+			int posY = mlbShowdown.screenHeight - Gdx.input.getY();
 			TextBounds bounds = aeroDisplayItalicFont36.getBounds(this.text);
 			if (posX >= this.positionX && posX <= this.positionX + bounds.width &&
 					posY <= this.positionY && posY >= (this.positionY - bounds.height)) {

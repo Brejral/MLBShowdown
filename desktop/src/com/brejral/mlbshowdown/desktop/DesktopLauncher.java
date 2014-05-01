@@ -8,8 +8,8 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		MLBShowdown showdown = new MLBShowdown();
-		config.width = showdown.screenSizeX;
-		config.height = showdown.screenSizeY;
+		config.width = showdown.screenWidth;
+		config.height = showdown.screenHeight;
 		new LwjglApplication(showdown, config);
 	}
 }
