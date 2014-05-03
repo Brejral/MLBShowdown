@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -14,6 +15,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.sql.Database;
 import com.badlogic.gdx.sql.DatabaseCursor;
 import com.badlogic.gdx.sql.SQLiteGdxException;
+import com.brejral.mlbshowdown.MLBShowdown;
 
 public class Card {
 	public Database db;
@@ -22,6 +24,7 @@ public class Card {
 	public TextureRegion cardTexture;
 	public float scale;
 	public int onbase, control, ip, speed, posX, posY, cardnum, id, points, posBonus1, posBonus2;
+	public int controlAdj, ipAdj;
 	public int[] chart = new int[10];
 	public FreeTypeFontGenerator obcGenerator;
 	public FreeTypeFontGenerator chartGenerator;
@@ -34,10 +37,14 @@ public class Card {
 	public BitmapFont chartFont;
 	public BitmapFont cnFont;
 	
+	public Card() {
+		
+	}
+	
 	public Card(Database database, int iden) {
 		db = database;
 		id = iden;
-		populateFieldsFromDB();
+		getCardDataFromDB();
 		backgroundTexture = new Texture(Gdx.files.internal("images/" + image));
 		obcGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Muro.ttf"));
 		chartGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/US101.TTF"));
@@ -59,7 +66,7 @@ public class Card {
 		createTexture();
 	}
 	
-	private void populateFieldsFromDB() {
+	private void getCardDataFromDB() {
 		DatabaseCursor cursor = null;
 		try {
 			cursor = db.rawQuery("Select * from cards where id = "+ id + ";");
@@ -168,6 +175,8 @@ public class Card {
 		
 		drawPitcherChartText(batch);
 		
+		drawTeamLogo(batch);
+		
 		batch.end();
 		
 		fbo.end();
@@ -214,6 +223,8 @@ public class Card {
 		obcFont.draw(batch, obString, obtx, obty);
 		
 		drawBatterChartText(batch);
+		
+		drawTeamLogo(batch);
 		
 		batch.end();
 		
@@ -362,7 +373,21 @@ public class Card {
 			String yearNumString = numString + "          " + "'" + yearString;
 			cnFont.draw(batch, yearNumString, ctx, cty);
 		}
-
 	}
 	
+	private void drawTeamLogo(SpriteBatch batch) {
+		Texture tex = null;
+		if (rarity.equals("P")) {
+			tex = CardConstants.TEAM_LOGOS_GOLD_TEXTURE;
+		} else {
+			tex = CardConstants.TEAM_LOGOS_TEXTURE;
+		}
+		int index = MLBShowdown.getTeamNamesList().indexOf(team) + 1;
+		int row = (int) Math.ceil((float)index/6f);
+		int col = index - (row-1)*6;
+		Sprite logo = new Sprite(tex, 200*(col - 1), 200*(row - 1), 200, 200);
+		logo.setScale(.4f);
+		logo.setPosition(340, 100);
+		logo.draw(batch);
+	}
 }
