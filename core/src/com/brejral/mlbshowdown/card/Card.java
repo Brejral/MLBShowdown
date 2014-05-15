@@ -3,8 +3,10 @@ package com.brejral.mlbshowdown.card;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -12,18 +14,24 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
+import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
+import com.badlogic.gdx.scenes.scene2d.actions.ScaleToAction;
 import com.badlogic.gdx.sql.Database;
 import com.badlogic.gdx.sql.DatabaseCursor;
 import com.badlogic.gdx.sql.SQLiteGdxException;
 import com.brejral.mlbshowdown.MLBShowdown;
 
-public class Card {
+public class Card extends Actor {
+	private MLBShowdown sd;
 	public Database db;
 	public String cardType, name, image, team, rarity, bats, throwHand, pos1, pos2, icons;
-	public Texture backgroundTexture;
+	public Texture backgroundTexture, highlightTexture;
 	public TextureRegion cardTexture;
-	public float scale;
-	public int onbase, control, ip, speed, posX, posY, cardnum, id, points, posBonus1, posBonus2;
+	public int onbase, control, ip, speed, cardnum, id, points, posBonus1, posBonus2;
 	public int controlAdj, ipAdj;
 	public int[] chart = new int[10];
 	public FreeTypeFontGenerator obcGenerator;
@@ -36,13 +44,17 @@ public class Card {
 	public BitmapFont obcFont;
 	public BitmapFont chartFont;
 	public BitmapFont cnFont;
-	
+	public boolean isZoomed = false;
+	public boolean isSelected = false;
+	public float preZoomX, preZoomY, preZoomScale;
+
 	public Card() {
-		
+
 	}
-	
-	public Card(Database database, int iden) {
-		db = database;
+
+	public Card(MLBShowdown showdown, int iden) {
+		sd = showdown;
+		db = sd.db;
 		id = iden;
 		getCardDataFromDB();
 		backgroundTexture = new Texture(Gdx.files.internal("images/" + image));
@@ -63,13 +75,34 @@ public class Card {
 			obcFontParameter.size -= 5;
 		}
 		obcFont = obcGenerator.generateFont(obcFontParameter);
+		Pixmap pixmap = new Pixmap(backgroundTexture.getWidth(), backgroundTexture.getHeight(), Pixmap.Format.RGBA8888);
+		pixmap.setColor(Color.YELLOW);
+		pixmap.fill();
+		highlightTexture = new Texture(pixmap);
+		pixmap.dispose();
 		createTexture();
+		setName(name);
+		setVisible(false);
+		setTouchable(Touchable.enabled);
+		setBounds(getX(), getY(), cardTexture.getRegionWidth(), cardTexture.getRegionHeight());
+		addListener(new InputListener() {
+			@Override
+			public boolean touchDown(InputEvent event, float x, float y,
+					int pointer, int button) {
+				Card card = (Card)event.getTarget();
+				if (!isZoomed) {
+					card.zoom();
+				}
+				return true;
+			}
+		});
 	}
-	
+
 	private void getCardDataFromDB() {
 		DatabaseCursor cursor = null;
 		try {
 			cursor = db.rawQuery("Select * from cards where id = "+ id + ";");
+			System.out.println(cursor.getInt(0));
 			cardType = cursor.getString(25);
 			cardnum = cursor.getInt(1);
 			name = cursor.getString(2);
@@ -89,7 +122,9 @@ public class Card {
 			case "Pitcher":
 				throwHand = cursor.getString(10);
 				ip = cursor.getInt(11);
+				ipAdj = ip;
 				control = cursor.getInt(12);
+				controlAdj = control;
 				break;
 			}
 			icons = cursor.getString(13);
@@ -99,20 +134,30 @@ public class Card {
 				}
 			}
 			image = cursor.getString(24);
-			
+
 		} catch (SQLiteGdxException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void draw(SpriteBatch batch) {
-		batch.draw(cardTexture, posX, posY, cardTexture.getRegionWidth()*scale, cardTexture.getRegionHeight()*scale);
+
+	/**
+	 * Draw the card to centered on it's position and scaled from its original size
+	 * of 510x710
+	 * 
+	 * @param batch - The sprite batch to draw to
+	 */
+	@Override
+	public void draw(Batch batch, float alpha) {
+		int w = (int) (getWidth()*getScaleX());
+		int h = (int) (getHeight()*getScaleY());
+		batch.draw(cardTexture, getX() - w/2, getY() - h/2, getOriginX(), getOriginY(),
+	            getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation());
 	}
-	
+
 	public void dispose() {
 		backgroundTexture.dispose();
 	}
-	
+
 	public void createTexture() {
 		switch(cardType){
 		case "Batter":
@@ -125,12 +170,12 @@ public class Card {
 			createStrategyTexture();
 			break;
 		}
-		
+
 	}
-	
+
 	private void createStrategyTexture() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private void createPitcherTexture() {
@@ -138,27 +183,27 @@ public class Card {
 		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, 510, 710, false);
 		cardTexture = new TextureRegion(fbo.getColorBufferTexture(), 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		cardTexture.flip(false, true);
-		
+
 		fbo.begin();
-		
+
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.getProjectionMatrix().setToOrtho2D(0, 0, fbo.getWidth(), fbo.getHeight());
 		batch.begin();
-		
+
 		batch.setBlendFunction(-1, -1);
 		Gdx.gl20.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE);
-		
+
 		// Piece the image together
 		batch.draw(backgroundTexture, 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		batch.draw(CardConstants.CHART_TEXTURE, 0, 60, CardConstants.CHART_TEXTURE.getWidth(), CardConstants.CHART_TEXTURE.getHeight());
 		batch.draw(CardConstants.CONTROL_TEXTURE, 10, 130, CardConstants.CONTROL_TEXTURE.getWidth(), CardConstants.CONTROL_TEXTURE.getHeight());
 
 		drawNameText(batch);
-		
+
 		//Draw the control text
 		int ctx, cty;
-		String cntrlString = "+" + control;
+		String cntrlString = "+" + controlAdj;
 		ctx = 45 - (int)obcFont.getBounds(cntrlString).width/2;
 		cty = 189;
 		obcFont.setColor(Color.BLACK);
@@ -172,13 +217,13 @@ public class Card {
 		obcFont.draw(batch, cntrlString, ctx+1, cty+1);
 		obcFont.setColor(Color.RED);
 		obcFont.draw(batch, cntrlString, ctx, cty);
-		
+
 		drawPitcherChartText(batch);
-		
+
 		drawTeamLogo(batch);
-		
+
 		batch.end();
-		
+
 		fbo.end();
 	}
 
@@ -187,24 +232,24 @@ public class Card {
 		FrameBuffer fbo = new FrameBuffer(Format.RGBA8888, 510, 710, false);
 		cardTexture = new TextureRegion(fbo.getColorBufferTexture(), 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		cardTexture.flip(false, true);
-		
+
 		fbo.begin();
-		
+
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.getProjectionMatrix().setToOrtho2D(0, 0, fbo.getWidth(), fbo.getHeight());
 		batch.begin();
-		
+
 		batch.setBlendFunction(-1, -1);
 		Gdx.gl20.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE);
-		
+
 		// Piece the image together
 		batch.draw(backgroundTexture, 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight());
 		batch.draw(CardConstants.CHART_TEXTURE, 0, 60, CardConstants.CHART_TEXTURE.getWidth(), CardConstants.CHART_TEXTURE.getHeight());
 		batch.draw(CardConstants.ONBASE_TEXTURE, 10, 130, CardConstants.ONBASE_TEXTURE.getWidth(), CardConstants.ONBASE_TEXTURE.getHeight());
-		
+
 		drawNameText(batch);
-		
+
 		//Draw the onbase text
 		int obtx, obty;
 		String obString = Integer.toString(onbase);
@@ -221,16 +266,16 @@ public class Card {
 		obcFont.draw(batch, obString, obtx+1, obty+1);
 		obcFont.setColor(Color.RED);
 		obcFont.draw(batch, obString, obtx, obty);
-		
+
 		drawBatterChartText(batch);
-		
+
 		drawTeamLogo(batch);
-		
+
 		batch.end();
-		
+
 		fbo.end();
 	}
-	
+
 	private void drawBatterChartText(SpriteBatch batch) {
 		//Draw the chart text
 		chartFont.setColor(Color.WHITE);
@@ -239,7 +284,7 @@ public class Card {
 		cty = 145;
 		String ptString = points + " PT.";
 		chartFont.draw(batch, ptString, ctx, cty);
-		
+
 		ctx += (int)chartFont.getBounds(ptString).width + 20;
 		StringBuilder builder = new StringBuilder("SPEED ");
 		if (speed >= 18) {
@@ -252,21 +297,21 @@ public class Card {
 		builder.append(speed + ")");
 		String speedString = builder.toString();
 		chartFont.draw(batch, speedString, ctx, cty);
-		
+
 		ctx += (int)chartFont.getBounds(speedString).width + 20;
 		String batsString = "BATS " + bats;
 		chartFont.draw(batch, batsString, ctx, cty);
-		
+
 		ctx += (int)chartFont.getBounds(batsString).width + 20;
 		String position1String = pos1 + " + " + posBonus1;
 		chartFont.draw(batch, position1String, ctx, cty);
-		
+
 		if (pos2 != null) {
 			ctx += (int)chartFont.getBounds(position1String).width + 20;
 			String position2String = pos2 + " + " + posBonus2;
 			chartFont.draw(batch, position2String, ctx, cty);
 		}
-		
+
 		// Draw the chart text and results
 		cty -= 25;
 		ctx = 47;
@@ -291,60 +336,60 @@ public class Card {
 				ctx += 52;
 			}
 		}
-		
+
 		drawCardNumText(batch);
-		
+
 	}
-	
+
 	private void drawPitcherChartText(SpriteBatch batch) {
 		//Draw the chart text
-				chartFont.setColor(Color.WHITE);
-				int ctx, cty;
-				ctx = 105;
-				cty = 145;
-				String ptString = points + " PT.";
-				chartFont.draw(batch, ptString, ctx, cty);
-				
-				ctx += (int)chartFont.getBounds(ptString).width + 20;
-				String position1String = pos1;
-				chartFont.draw(batch, position1String, ctx, cty);
-				
-				ctx += (int)chartFont.getBounds(position1String).width + 20;
-				String throwsString = throwHand + "HP";
-				chartFont.draw(batch, throwsString, ctx, cty);
-				
-				ctx += (int)chartFont.getBounds(throwsString).width + 20;
-				String speedString = "IP " + ip;
-				chartFont.draw(batch, speedString, ctx, cty);
-				
-				// Draw the chart text and results
-				cty -= 25;
-				ctx = 52;
-				int startNum = 1;
-				String resultString = null;
-				for (int i = 0; i < chart.length; i++) {
-					if (i != 6 && i != 8) {
-						if (i == 9) {
-							resultString = chart[i] + "+";
-						} else if (chart[i] == startNum) {
-							resultString = Integer.toString(chart[i]);
-						} else if (chart[i] > startNum) {
-							resultString = startNum + "---" + chart[i];
-						} else {
-							resultString = "---";
-						}
-						int strLen = (int)chartFont.getBounds(resultString).width;
-						chartFont.draw(batch, resultString, ctx - strLen/2, cty);
-						strLen = (int)chartFont.getBounds(CardConstants.CHART_TEXT[i]).width;
-						chartFont.draw(batch, CardConstants.CHART_TEXT[i], ctx - strLen/2, cty - 25);
-						startNum = chart[i] + 1;
-						ctx += 58;
-					}
+		chartFont.setColor(Color.WHITE);
+		int ctx, cty;
+		ctx = 105;
+		cty = 145;
+		String ptString = points + " PT.";
+		chartFont.draw(batch, ptString, ctx, cty);
+
+		ctx += (int)chartFont.getBounds(ptString).width + 20;
+		String position1String = pos1;
+		chartFont.draw(batch, position1String, ctx, cty);
+
+		ctx += (int)chartFont.getBounds(position1String).width + 20;
+		String throwsString = throwHand + "HP";
+		chartFont.draw(batch, throwsString, ctx, cty);
+
+		ctx += (int)chartFont.getBounds(throwsString).width + 20;
+		String speedString = "IP " + ipAdj;
+		chartFont.draw(batch, speedString, ctx, cty);
+
+		// Draw the chart text and results
+		cty -= 25;
+		ctx = 52;
+		int startNum = 1;
+		String resultString = null;
+		for (int i = 0; i < chart.length; i++) {
+			if (i != 6 && i != 8) {
+				if (i == 9) {
+					resultString = chart[i] + "+";
+				} else if (chart[i] == startNum) {
+					resultString = Integer.toString(chart[i]);
+				} else if (chart[i] > startNum) {
+					resultString = startNum + "---" + chart[i];
+				} else {
+					resultString = "---";
 				}
-				
-				drawCardNumText(batch);
+				int strLen = (int)chartFont.getBounds(resultString).width;
+				chartFont.draw(batch, resultString, ctx - strLen/2, cty);
+				strLen = (int)chartFont.getBounds(CardConstants.CHART_TEXT[i]).width;
+				chartFont.draw(batch, CardConstants.CHART_TEXT[i], ctx - strLen/2, cty - 25);
+				startNum = chart[i] + 1;
+				ctx += 58;
+			}
+		}
+
+		drawCardNumText(batch);
 	}
-	
+
 	private void drawNameText(SpriteBatch batch) {
 		int ntx, nty; //Name Text X and Y Positions
 		ntx = 105;
@@ -361,7 +406,7 @@ public class Card {
 		nameFont.setColor(Color.WHITE);
 		nameFont.draw(batch, name, ntx, nty);
 	}
-	
+
 	private void drawCardNumText(SpriteBatch batch) {
 		// Draw the year and the card number
 		if (cardnum != 0) {
@@ -374,7 +419,7 @@ public class Card {
 			cnFont.draw(batch, yearNumString, ctx, cty);
 		}
 	}
-	
+
 	private void drawTeamLogo(SpriteBatch batch) {
 		Texture tex = null;
 		if (rarity.equals("P")) {
@@ -389,5 +434,51 @@ public class Card {
 		logo.setScale(.4f);
 		logo.setPosition(340, 100);
 		logo.draw(batch);
+	}
+	
+	public void addIp() {
+		ipAdj--;
+		if (ipAdj < 1) {
+			controlAdj--;
+		}
+		createTexture();
+	}
+	
+	@Override
+	public Actor hit(float x, float y, boolean touchable) {
+		x = Gdx.input.getX();
+		y = Gdx.graphics.getHeight() - Gdx.input.getY();
+		int w = (int) (getWidth()*getScaleX());
+		int h = (int) (getHeight()*getScaleY());
+		if (x >= getX() - w/2 && x <= getX() + w/2 &&
+				y <= getY() + h/2 && y >= getY() - h/2) {
+			return this;
+		}
+		return null;
+	};
+
+	public boolean hasActions() {
+		return getActions().size > 0;
+	}
+	
+	public void zoom() {
+		MoveToAction moveAct = new MoveToAction();
+		ScaleToAction scaleAct = new ScaleToAction();
+		if(!isZoomed) {
+			preZoomX = getX();
+			preZoomY = getY();
+			preZoomScale = getScaleX(); //Scale should be the same for x and y for Cards
+			moveAct.setPosition(450, 300);
+			scaleAct.setScale(.8f);
+			setZIndex(100);
+		} else {
+			moveAct.setPosition(preZoomX, preZoomY);
+			scaleAct.setScale(preZoomScale);
+		}
+		moveAct.setDuration(MLBShowdown.ZOOM_ANIMATION_SPEED);
+		scaleAct.setDuration(MLBShowdown.ZOOM_ANIMATION_SPEED);
+		addAction(moveAct);
+		addAction(scaleAct);
+		isZoomed = !isZoomed;
 	}
 }

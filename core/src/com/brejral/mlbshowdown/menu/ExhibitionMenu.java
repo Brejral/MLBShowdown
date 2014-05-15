@@ -10,17 +10,17 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.brejral.mlbshowdown.MLBShowdown;
-import com.brejral.mlbshowdown.game.GameScreen;
+import com.brejral.mlbshowdown.game.GameLoadingScreen;
 
 public class ExhibitionMenu implements Screen {
-	final MLBShowdown mlbShowdown;
+	final MLBShowdown sd;
 	SpriteBatch batch;
 	FreeTypeFontGenerator generator;
 	FreeTypeFontParameter fontParameter;
 	BitmapFont aeroDisplayItalicFont36;
 	
 	public ExhibitionMenu(MLBShowdown showdown) {
-		mlbShowdown = showdown;
+		sd = showdown;
 		batch = new SpriteBatch();
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
 		fontParameter = new FreeTypeFontParameter();
@@ -34,12 +34,14 @@ public class ExhibitionMenu implements Screen {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
 		batch.begin();
+		batch.draw(sd.fieldTexture, 0, 0);
 		aeroDisplayItalicFont36.setColor(Color.WHITE);
 		aeroDisplayItalicFont36.draw(batch, "ExhibitionMenu", 10, 590);
+		aeroDisplayItalicFont36.draw(batch, "Press SPACE to continue", 50, 500);
 		batch.end();
 		
 		if (Gdx.input.isKeyPressed(Keys.SPACE)) {
-			mlbShowdown.setScreen(new GameScreen(mlbShowdown));
+			sd.setScreen(new GameLoadingScreen(sd));
 		}
 	}
 

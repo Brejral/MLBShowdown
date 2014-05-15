@@ -9,7 +9,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFont.TextBounds;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -18,9 +17,8 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFont
 import com.brejral.mlbshowdown.MLBShowdown;
 
 public class MainMenu implements Screen {
-	final MLBShowdown mlbShowdown;
+	final MLBShowdown sd;
 	SpriteBatch batch;
-	Texture backgroundTexture;
 	FreeTypeFontGenerator generator;
 	FreeTypeFontParameter fontParameter;
 	BitmapFont aeroDisplayItalicFont72;
@@ -28,9 +26,8 @@ public class MainMenu implements Screen {
 	List<MenuItem> menuList;
 	
 	public MainMenu(final MLBShowdown showdown) {
-		mlbShowdown = showdown;
+		sd = showdown;
 		batch = new SpriteBatch();
-		backgroundTexture = new Texture("images/baseball_diamond.png");
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
 		fontParameter = new FreeTypeFontParameter();
 		fontParameter.size = 72;
@@ -38,7 +35,7 @@ public class MainMenu implements Screen {
 		fontParameter.size = 36;
 		aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
 		menuList = new ArrayList<MenuItem>();
-		menuList.add(new MenuItem("Exhibition", 500, new ExhibitionMenu(mlbShowdown)));
+		menuList.add(new MenuItem("Exhibition", 500, new ExhibitionMenu(sd)));
 		menuList.add(new MenuItem("Season", 450));
 		menuList.add(new MenuItem("Tournament", 400));
 		menuList.add(new MenuItem("Management", 350));
@@ -54,7 +51,7 @@ public class MainMenu implements Screen {
 		
 		batch.begin();
 		batch.setColor(1, 1, 1, .5f);
-		batch.draw(backgroundTexture, 0, 0);
+		batch.draw(sd.fieldTexture, 0, 0);
 		drawMenuText();
 		batch.end();
 		
@@ -81,7 +78,7 @@ public class MainMenu implements Screen {
 				MenuItem item = i.next();
 				if (item.isHighlighted()) {
 					if (item.screen != null) {
-						mlbShowdown.setScreen(item.screen);
+						sd.setScreen(item.screen);
 					}
 				}
 			}
@@ -120,7 +117,6 @@ public class MainMenu implements Screen {
 
 	@Override
 	public void dispose() {
-		backgroundTexture.dispose();
 		aeroDisplayItalicFont72.dispose();
 		aeroDisplayItalicFont36.dispose();
 		batch.dispose();
@@ -148,7 +144,7 @@ public class MainMenu implements Screen {
 		
 		public boolean isHighlighted() {
 			int posX = Gdx.input.getX();
-			int posY = mlbShowdown.screenHeight - Gdx.input.getY();
+			int posY = Gdx.graphics.getHeight() - Gdx.input.getY();
 			TextBounds bounds = aeroDisplayItalicFont36.getBounds(this.text);
 			if (posX >= this.positionX && posX <= this.positionX + bounds.width &&
 					posY <= this.positionY && posY >= (this.positionY - bounds.height)) {

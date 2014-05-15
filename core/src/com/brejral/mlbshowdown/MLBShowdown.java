@@ -4,26 +4,45 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
 import com.badlogic.gdx.sql.Database;
 import com.badlogic.gdx.sql.DatabaseFactory;
 import com.badlogic.gdx.sql.SQLiteGdxException;
 import com.brejral.mlbshowdown.menu.MainMenu;
+import com.brejral.mlbshowdown.user.User;
 
 public class MLBShowdown extends Game {
-	public SpriteBatch batch;
-	public final int screenWidth = 900;
-	public final int screenHeight = 600;
-	public Database db;
+	public static final int SCREEN_WIDTH = 900;
+	public static final int SCREEN_HEIGHT = 600;
 	public static final String DATABASE_NAME = "mlbshowdownDB.db";
 	public static final int DATABASE_VERSION = 1;
-													
+	public static final int CARD_WIDTH = 510;
+	public static final int CARD_HEIGHT = 710;
+	public static float ANIMATION_SPEED = 1f;
+	public static float TASK_SPEED = 1f;
+	public static float ZOOM_ANIMATION_SPEED = .2f;
+	public SpriteBatch batch;
+	public Database db;
+	public User user;
+	public Texture fieldTexture;
+	public NinePatch boardNP;
+	public NinePatchDrawable buttonOverDrawable;
+	
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
 		this.setScreen(new MainMenu(this));
+		fieldTexture = new Texture(Gdx.files.internal("images/baseball_diamond.png"));
 		db = DatabaseFactory.getNewDatabase(DATABASE_NAME, DATABASE_VERSION, "", null);
+		buttonOverDrawable = new NinePatchDrawable(new NinePatch(new Texture(Gdx.files.internal("images/button_over.png"))));
+		boardNP = new NinePatch(new TextureRegion(new Texture(Gdx.files.internal("images/scoreboard_background.png")), 64, 64), 8, 8, 8, 8);
 		db.setupDatabase();
+		user = new User(this, false);
 		try {
 			db.openOrCreateDatabase();
 		} catch (SQLiteGdxException e) {
