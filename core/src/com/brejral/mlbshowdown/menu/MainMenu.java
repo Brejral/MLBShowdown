@@ -41,7 +41,6 @@ public class MainMenu implements Screen {
 		menuList.add(new MenuItem("Management", 350));
 		menuList.add(new MenuItem("Statistics", 300));
 		menuList.add(new MenuItem("Settings", 250));
-		
 	}
 	
 	@Override

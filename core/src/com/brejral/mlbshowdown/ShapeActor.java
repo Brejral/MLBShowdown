@@ -15,14 +15,14 @@ public class ShapeActor extends Actor {
 	public float radius;
 	
 	/** 
-	 * Creates a Triangle ShapeActor
+	 * Creates a Triangle or Line ShapeActor
 	 * @param st - ShapeType (must be Filled or Line)
 	 * @param vertices - vertices for triangle [x1, y1, x2, y2, x3, y3]
 	 */
 	public ShapeActor(ShapeType st, float[] vertices) {
-		shape = "Triangle";
 		type = st;
 		verts = vertices;
+		shape = "Triangle";
 	}
 	
 	/**

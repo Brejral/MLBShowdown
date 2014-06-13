@@ -9,6 +9,7 @@ import com.badlogic.gdx.sql.DatabaseCursor;
 import com.badlogic.gdx.sql.SQLiteGdxException;
 import com.brejral.mlbshowdown.MLBShowdown;
 import com.brejral.mlbshowdown.card.Card;
+import com.brejral.mlbshowdown.card.CardActor;
 
 public class Stats {
 	MLBShowdown sd;
@@ -42,7 +43,7 @@ public class Stats {
 		}
 	}
 	
-	public int getInt(Card card, String col) {
+	public int getInt(CardActor card, String col) {
 		int index = columns.indexOf(col);
 		return cursor.getInt(index);
 	}

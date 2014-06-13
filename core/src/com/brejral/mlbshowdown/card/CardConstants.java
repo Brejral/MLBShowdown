@@ -1,5 +1,8 @@
 package com.brejral.mlbshowdown.card;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
@@ -18,8 +21,17 @@ public class CardConstants {
 	public static Texture TEAM_LOGOS_GOLD_TEXTURE = new Texture(Gdx.files.internal("images/team_logos_gold.png"));
 	public static int TEAM_LOGOS_NUM_X = 6;
 	public static int TEAM_LOGOS_NUM_Y = 5;
-	
-	public static SequenceAction getRunToFirstAction(Game game, Card card) {
+	public static String[] CARD_INFO_COLS = {
+      "ID","CARDNUM","NAME","TEAM","POINTS","RARITY","POSITION1","POSITIONBONUS1","POSITION2","POSITIONBONUS2",
+      "BATS_THROWS","SPEED_IP","ONBASE_CONTROL","ICONS","PU","SO","GB","FB","BB","SINGLE","SINGLEPLUS","DOUBLE2", 
+      "TRIPLE","HR","IMAGE","CARDTYPE","LASTNAME"
+   };
+	public static List<String> CARD_INFO = Arrays.asList(CARD_INFO_COLS);
+	public static String[] CARD_INFO_COL_TYPES = {
+	   "N","N","S","S","N","S","S","N","S","N","S","N","N","S","N","N","N","N","N","N","N","N","N","N","S","S","S"
+	};
+   
+	public static SequenceAction getRunToFirstAction(Game game, CardActor card) {
 		SequenceAction action = new SequenceAction();
 		MoveToAction action1 = new MoveToAction();
 		action1.setPosition(625, 260);
@@ -30,7 +42,7 @@ public class CardConstants {
 		return action;
 	}
 	
-	public static SequenceAction getRunToSecondAction(Game game, Card card) {
+	public static SequenceAction getRunToSecondAction(Game game, CardActor card) {
 		SequenceAction action = new SequenceAction();
 		if (card.getX() == 450 && card.getY() == 75) {
 			MoveToAction action1 = new MoveToAction();
@@ -47,7 +59,7 @@ public class CardConstants {
 		return action;
 	}
 	
-	public static SequenceAction getRunToThirdAction(Game game, Card card) {
+	public static SequenceAction getRunToThirdAction(Game game, CardActor card) {
 		SequenceAction action = new SequenceAction();
 		if (card.getX() == 450 && card.getY() == 75) {
 			MoveToAction action1 = new MoveToAction();
@@ -71,9 +83,9 @@ public class CardConstants {
 		return action;
 	}
 	
-	public static SequenceAction getRunToHomeAction(Game game, Card card) {
+	public static SequenceAction getRunToHomeAction(Game game, CardActor card) {
 		SequenceAction action = new SequenceAction();
-		if (card.getX() == 450 && card.getY() == 75) {
+      if (card.getX() == 450 && card.getY() == 75) {
 			MoveToAction action1 = new MoveToAction();
 			action1.setPosition(625, 260);
 			action1.setDuration(MLBShowdown.ANIMATION_SPEED);
