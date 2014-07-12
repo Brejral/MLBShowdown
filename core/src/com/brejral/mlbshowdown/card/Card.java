@@ -1,16 +1,20 @@
 package com.brejral.mlbshowdown.card;
 
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.sql.DatabaseCursor;
 import com.brejral.mlbshowdown.MLBShowdown;
 
 public class Card {
    public int[] chart = new int[10], gameStats = new int[MLBShowdown.GAME_STATS.size()];
-   public String cardType, name, image, team, rarity, bats, throwHand, pos1, pos2, icons;
+   public String cardType, name, lastName, image, team, rarity, bats, throwHand, pos1, pos2, icons;
    public int onbase, control, ip, speed, cardnum, id, points, posBonus1, posBonus2;
    public int ipAdj, controlAdj;
+   public boolean isImageLoaded = false;
+   public TextureRegion cardTexture;
    
    public Card(DatabaseCursor cursor) {
       populateInfo(cursor);
+      CardConstants.createTexture(this);
    }
    
    private void populateInfo(DatabaseCursor cursor) {
@@ -18,6 +22,7 @@ public class Card {
       cardType = cursor.getString(25);
       cardnum = cursor.getInt(1);
       name = cursor.getString(2);
+      lastName = cursor.getString(26);
       team = cursor.getString(3);
       points = cursor.getInt(4);
       rarity = cursor.getString(5);
@@ -58,5 +63,9 @@ public class Card {
       if (ipOld != ipAdj) {
          setControl();
       }
+   }
+
+   public String getPositions() {
+      return pos1 + (pos2 != null ? "/" + pos2 : "");
    }
 }

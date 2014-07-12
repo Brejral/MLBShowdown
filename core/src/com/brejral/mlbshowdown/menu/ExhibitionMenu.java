@@ -7,25 +7,18 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.brejral.mlbshowdown.MLBShowdown;
 import com.brejral.mlbshowdown.game.GameLoadingScreen;
 
 public class ExhibitionMenu implements Screen {
 	final MLBShowdown sd;
 	SpriteBatch batch;
-	FreeTypeFontGenerator generator;
-	FreeTypeFontParameter fontParameter;
 	BitmapFont aeroDisplayItalicFont36;
 	
 	public ExhibitionMenu(MLBShowdown showdown) {
 		sd = showdown;
 		batch = new SpriteBatch();
-		generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
-		fontParameter = new FreeTypeFontParameter();
-		fontParameter.size = 36;
-		aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
+		aeroDisplayItalicFont36 = MLBShowdown.getAeroItalicFont(36);
 	}
 
 	@Override
@@ -79,7 +72,7 @@ public class ExhibitionMenu implements Screen {
 	public void dispose() {
 		// TODO Auto-generated method stub
 		batch.dispose();
-		generator.dispose();
+		aeroDisplayItalicFont36.dispose();
 	}
 
 }

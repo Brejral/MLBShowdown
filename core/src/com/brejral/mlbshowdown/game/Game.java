@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Random;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.sql.Database;
 import com.badlogic.gdx.utils.Pools;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.Timer.Task;
 import com.brejral.mlbshowdown.MLBShowdown;
-import com.brejral.mlbshowdown.TextActor;
 import com.brejral.mlbshowdown.card.CardActor;
 import com.brejral.mlbshowdown.card.CardConstants;
 import com.brejral.mlbshowdown.menu.MainMenu;
@@ -37,9 +38,12 @@ public class Game {
    public List<Integer> awayScorePerInning = new ArrayList<>();
    public String result, result2;
    public Random rand;
+   public StringBuilder gameLog = new StringBuilder(getInningText() + "\n\n");
+   public StringBuilder resultLog = new StringBuilder();
    public Timer timer = new Timer();
    public boolean checkForDoublePlay = false, checkForAdvancement = false;
    public boolean checkForAdvancementRunner2 = false, checkForAdvancementRunner3 = false;
+   public boolean addScoreToGameLog = false;
 
    /**
     * Creates a new game
@@ -54,14 +58,14 @@ public class Game {
       manager = assetManager;
       db = sd.db;
       rand = new Random(System.currentTimeMillis());
-      TeamParameter param = new TeamParameter(sd, new User(sd, true), "Mariners");
+      TeamParameter param = new TeamParameter(sd, sd.user, "Mariners");
       manager.load("Away Team", Team.class, param);
-      param = new TeamParameter(sd, sd.user, "Angels");
+      param = new TeamParameter(sd, new User(sd, true), "Angels");
       manager.load("Home Team", Team.class, param);
       statKeeper = new StatKeeper(this);
       awayScorePerInning.add(0);
    }
-   
+
    public void setTeams() {
       awayTeam = manager.get("Away Team");
       homeTeam = manager.get("Home Team");
@@ -74,6 +78,7 @@ public class Game {
       statKeeper.setUpArraysForGame();
       setBatter();
       setPitcher();
+      stage.setLineupHighlight();
    }
 
    /**
@@ -82,7 +87,8 @@ public class Game {
    public void setPitcher() {
       removeCardVisibility(pitcher);
       pitcher = Pools.obtain(CardActor.class);
-      stage.addActor(pitcher);
+      Group group = (Group) stage.getRoot().findActor("Player Card Group");
+      group.addActor(pitcher);
       if (isTop) {
          pitcher.setCardInfo(homeTeam.positions.get(1));
       } else {
@@ -106,7 +112,8 @@ public class Game {
          team = homeTeam;
       }
       batter = Pools.obtain(CardActor.class);
-      stage.addActor(batter);
+      Group group = (Group) stage.getRoot().findActor("Player Card Group");
+      group.addActor(batter);
       batter.setCardInfo(team.lineup.get(team.lineupSpot));
       batter.setName("Batter");
       batter.setPosition(450, 75);
@@ -279,8 +286,9 @@ public class Game {
    }
 
    public void getAdvancementResult() {
-      TextActor promptText = (TextActor) stage.getRoot().findActor("Prompt Text");
-      int speedAdj = batter.card.speed + (outs == 2 && !result.equals("FB") ? 5 : 0) + (promptText.getText().equals("Throw Home") ? 5 : 0);
+      Label promptText = (Label) stage.getRoot().findActor("Prompt Text");
+      CardActor card = promptText.getText().equals("Throw Home") ? runner3 : runner2;
+      int speedAdj = card.card.speed + (outs == 2 && !result.equals("FB") ? 5 : 0) + (promptText.getText().equals("Throw Home") ? 5 : 0);
       if (fieldingThrow > speedAdj) {
          result2 = promptText.getText().equals("Throw Home") ? "Out at Home" : "Out at 3rd";
       } else {
@@ -442,6 +450,7 @@ public class Game {
          statKeeper.increaseStat(pitcher, "OUTS");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "PUP");
+         resultLog.append(batter.card.lastName + " popped out. (" + (outs + 1) + ") ");
          removeCardVisibility(batter);
          addOut();
          break;
@@ -451,6 +460,7 @@ public class Game {
          statKeeper.increaseStat(pitcher, "OUTS");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "SOP");
+         resultLog.append(batter.card.lastName + " struck out. (" + (outs + 1) + ") ");
          removeCardVisibility(batter);
          addOut();
          break;
@@ -460,17 +470,29 @@ public class Game {
          statKeeper.increaseStat(pitcher, "OUTS");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "GBP");
+         if (checkForDoublePlay && result2.equals("Double Play")) {
+            resultLog.append(batter.card.lastName + " grounded into double play. " + runner1.card.lastName + " out at second. (" + (outs + 2) + ") ");
+         } else if (checkForDoublePlay) {
+            resultLog.append(batter.card.lastName + " grounded into fielders choice. " + runner1.card.lastName + " out at second. (" + (outs + 1) + ") ");
+         } else {
+            resultLog.append(batter.card.lastName + " grounded out. (" + (outs + 1) + ") ");
+         }
          if (runner3 != null) {
             if (outs < 1 || (outs < 2 && !checkForDoublePlay) || (outs == 1 && !result2.equals("Double Play"))) {
                statKeeper.increaseStat(runner3, "R");
                statKeeper.increaseStat(pitcher, "RP");
                statKeeper.increaseStat(pitcher, "ER");
+               resultLog.append(runner3.card.lastName + " scored. ");
+               addScoreToGameLog = true;
                if (!result2.equals("Double Play")) {
                   statKeeper.increaseStat(batter, "RBI");
                }
                addScore();
             }
             removeCardVisibility(runner3);
+         }
+         if (runner2 != null && (outs < 1 || (outs < 2 && !checkForDoublePlay) || (outs == 1 && !result2.equals("Double Play")))) {
+            resultLog.append(runner2.card.lastName + " to third.");
          }
          setRunner3(runner2);
          if (runner1 == null || outs == 2) {
@@ -499,24 +521,30 @@ public class Game {
          statKeeper.increaseStat(pitcher, "OUTS");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "FBP");
+         resultLog.append(batter.card.lastName + " flew out. (" + (outs + 1) + ")");
          removeCardVisibility(batter);
          addOut();
          break;
       case "BB":
          statKeeper.increaseStat(batter, "BB");
          statKeeper.increaseStat(pitcher, "BBP");
+         resultLog.append(batter.card.lastName + " walked. ");
          if (runner3 != null && runner2 != null && runner1 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
          if (runner2 != null && runner1 != null) {
+            resultLog.append(runner2.card.lastName + " to third. ");
             setRunner3(runner2);
          }
          if (runner1 != null) {
+            resultLog.append(runner1.card.lastName + " to second. ");
             setRunner2(runner1);
          }
          setRunner1(batter);
@@ -527,15 +555,24 @@ public class Game {
          statKeeper.increaseStat(batter, "SINGLE");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "SINGLEP");
+         resultLog.append(batter.card.lastName + " singled. ");
          if (runner3 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
+         if (runner2 != null) {
+            resultLog.append(runner2.card.lastName + " to third. ");
+         }
          setRunner3(runner2);
+         if (runner1 != null) {
+            resultLog.append(runner1.card.lastName + " to second. ");
+         }
          setRunner2(runner1);
          setRunner1(batter);
          break;
@@ -545,19 +582,30 @@ public class Game {
          statKeeper.increaseStat(batter, "SINGLE");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "SINGLEP");
+         resultLog.append(batter.card.lastName + " singled. ");
          if (runner3 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
+         if (runner2 != null) {
+            resultLog.append(runner2.card.lastName + " to third. ");
+         }
          setRunner3(runner2);
+         if (runner1 != null) {
+            resultLog.append(runner1.card.lastName + " to second. ");
+         }
          setRunner2(runner1);
          if (runner2 != null) {
             setRunner1(batter);
          } else {
+            statKeeper.increaseStat(batter, "SB");
+            resultLog.append(batter.card.lastName + " stole second. ");
             setRunner2(batter);
             setRunner1(null);
          }
@@ -568,11 +616,14 @@ public class Game {
          statKeeper.increaseStat(batter, "DOUBLE");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "DOUBLEP");
+         resultLog.append(batter.card.lastName + " doubled. ");
          if (runner3 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
@@ -581,8 +632,13 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner2.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner2);
             addScore();
+         }
+         if (runner1 != null) {
+            resultLog.append(runner1.card.lastName + " to third. ");
          }
          setRunner3(runner1);
          setRunner2(batter);
@@ -594,11 +650,14 @@ public class Game {
          statKeeper.increaseStat(batter, "TRIPLE");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "TRIPLEP");
+         resultLog.append(batter.card.lastName + " tripled. ");
          if (runner3 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
@@ -607,6 +666,8 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner2.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner2);
             addScore();
          }
@@ -615,6 +676,8 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner1.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner1);
             addScore();
          }
@@ -628,11 +691,15 @@ public class Game {
          statKeeper.increaseStat(batter, "HR");
          statKeeper.increaseStat(pitcher, "ABP");
          statKeeper.increaseStat(pitcher, "HRP");
+         resultLog.append(batter.card.lastName + " homered. ");
+         addScoreToGameLog = true;
          if (runner3 != null) {
             statKeeper.increaseStat(runner3, "R");
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner3.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner3);
             addScore();
          }
@@ -641,6 +708,8 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner2.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner2);
             addScore();
          }
@@ -649,6 +718,8 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            resultLog.append(runner1.card.lastName + " scored. ");
+            addScoreToGameLog = true;
             removeCardVisibility(runner1);
             addScore();
          }
@@ -667,7 +738,7 @@ public class Game {
       int ipOld = pitcher.card.ipAdj;
       pitcher.card.setIP();
       if (pitcher.card.ipAdj != ipOld) {
-         pitcher.createTexture();
+         CardConstants.createTexture(pitcher.card);
       }
    }
 
@@ -688,18 +759,22 @@ public class Game {
                statKeeper.increaseStat(pitcher, "RP");
                statKeeper.increaseStat(pitcher, "ER");
                statKeeper.increaseStat(batter, "RBI");
+               replaceResultLogText(runner3.card.lastName, runner3.card.lastName + " scored. ");
                removeCardVisibility(runner3);
                addScore();
                if (result.equals("FB")) {
                   statKeeper.increaseStat(batter, "AB", -1);
                   statKeeper.increaseStat(batter, "SAC");
+                  replaceResultLogText(batter.card.lastName, batter.card.lastName + " hit sacrifice fly to center. (" + outs + ") ");
                }
             }
             statKeeper.increaseStat(pitcher, "OUTS");
+            replaceResultLogText(runner2.card.lastName, runner2.card.lastName + " out trying to advance to third. (" + (outs + 1) + ") ");
             removeCardVisibility(runner2);
             addOut();
          } else if (result2.equals("Out at Home")) {
             statKeeper.increaseStat(pitcher, "OUTS");
+            replaceResultLogText(runner3.card.lastName, runner3.card.lastName + " out trying to advance home. (" + (outs + 1) + ") ");
             removeCardVisibility(runner3);
             setRunner3(runner2);
             addOut();
@@ -708,17 +783,21 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            replaceResultLogText(runner3.card.lastName, runner3.card.lastName + " scored. ");
             removeCardVisibility(runner3);
             addScore();
             if (result.equals("FB")) {
                statKeeper.increaseStat(batter, "AB", -1);
                statKeeper.increaseStat(batter, "SAC");
+               replaceResultLogText(batter.card.lastName, batter.card.lastName + " hit sacrifice fly to center. (" + outs + ") ");
             }
+            replaceResultLogText(runner2.card.lastName, runner2.card.lastName + " to third. ");
             setRunner3(runner2);
          }
          setRunner2(null);
       } else if (checkForAdvancementRunner3) {
          if (result2.equals("Out at Home")) {
+            replaceResultLogText(runner3.card.lastName, runner3.card.lastName + " out trying to advance home. (" + (outs + 1) + ") ");
             statKeeper.increaseStat(pitcher, "OUTS");
             addOut();
          } else {
@@ -726,10 +805,12 @@ public class Game {
             statKeeper.increaseStat(pitcher, "RP");
             statKeeper.increaseStat(pitcher, "ER");
             statKeeper.increaseStat(batter, "RBI");
+            replaceResultLogText(runner3.card.lastName, runner3.card.lastName + " scored. ");
             addScore();
             if (result.equals("FB")) {
                statKeeper.increaseStat(batter, "AB", -1);
                statKeeper.increaseStat(batter, "SAC");
+               replaceResultLogText(batter.card.lastName, batter.card.lastName + " hit sacrifice fly to center. (" + outs + ") ");
             }
          }
          removeCardVisibility(runner3);
@@ -737,9 +818,11 @@ public class Game {
       } else if (checkForAdvancementRunner2) {
          if (result2.equals("Out at 3rd")) {
             statKeeper.increaseStat(pitcher, "OUTS");
+            replaceResultLogText(runner2.card.lastName, runner2.card.lastName + " out trying to advance to third. (" + (outs + 1) + ") ");
             removeCardVisibility(runner2);
             addOut();
          } else {
+            replaceResultLogText(runner2.card.lastName, runner2.card.lastName + " to third. ");
             setRunner3(runner2);
          }
          setRunner2(null);
@@ -839,7 +922,9 @@ public class Game {
    }
 
    public void advanceAtBat() {
-      System.out.println("Advance At Bat");
+      gameLog.append(resultLog.length() > 0 ? resultLog.toString() + (addScoreToGameLog ? "(" + getScoreText() + ")" : "") + "\n" : "");
+      addScoreToGameLog = false;
+      resultLog = new StringBuilder();
       nextLineupSpot();
       checkEndOfInning();
       resetForNextAB();
@@ -847,7 +932,7 @@ public class Game {
 
    public void schedulePitchRoll() {
       TextButton button = (TextButton) stage.getRoot().findActor("Pitch Button");
-      if (pitch == 0 && !button.isTouchable()) {
+      if (pitch == 0 && button.isDisabled()) {
          timer.scheduleTask(new Task() {
             @Override
             public void run() {
@@ -860,7 +945,7 @@ public class Game {
 
    public void scheduleSwingRoll() {
       TextButton button = (TextButton) stage.getRoot().findActor("Swing Button");
-      if (swing == 0 && pitch != 0 && !button.isTouchable()) {
+      if (swing == 0 && pitch != 0 && button.isDisabled()) {
          timer.scheduleTask(new Task() {
             @Override
             public void run() {
@@ -873,7 +958,7 @@ public class Game {
 
    public void scheduleThrowRoll() {
       TextButton button = (TextButton) stage.getRoot().findActor("Throw Button");
-      if ((checkForAdvancement || checkForDoublePlay) && !button.isTouchable()) {
+      if ((checkForAdvancement || checkForDoublePlay) && button.isDisabled()) {
          timer.scheduleTask(new Task() {
             @Override
             public void run() {
@@ -900,7 +985,7 @@ public class Game {
          }
       }, MLBShowdown.TASK_SPEED);
    }
-
+   
    /**
     * Checks for the end of the inning
     */
@@ -928,6 +1013,7 @@ public class Game {
          } else {
             homeScorePerInning.add(0);
          }
+         gameLog.append("\n" + getInningText() + "\n\n");
          setPitcher();
       }
       checkEndOfGame();
@@ -1026,6 +1112,53 @@ public class Game {
       }
       if (runner3 != null && runner3.isZoomed && !runner3.hasActions()) {
          return runner3;
+      }
+      return null;
+   }
+   
+   public void replaceResultLogText(String lastName, String newString) {
+      String[] resultList = resultLog.toString().split(".");
+      resultLog = new StringBuilder();
+      for (String str : resultList) {
+         if (str.contains(lastName)) {
+            resultLog.append(newString);
+         } else {
+            resultLog.append(str);
+         }
+      }
+   }
+   
+   public String getScoreText() {
+      return awayTeam.abrev + ": " + awayScore + ", " + homeTeam.abrev + ": " + homeScore;
+   }
+   
+   public String getInningText() {
+      StringBuilder str = new StringBuilder();
+      str.append(isTop ? "Top" : "Bottom");
+      str.append(" of the " + inning);
+      switch(inning) {
+      case 1:
+         str.append("st");
+         break;
+      case 2:
+         str.append("nd");
+         break;
+      case 3:
+         str.append("rd");
+         break;
+      default:
+         str.append("th");
+         break;
+      }
+      return str.toString();
+   }
+
+   public Team getCurrentUserTeam() {
+      if (awayTeam.user.equals(sd.user)) {
+         return awayTeam;
+      }
+      if (homeTeam.user.equals(sd.user)) {
+         return homeTeam;
       }
       return null;
    }

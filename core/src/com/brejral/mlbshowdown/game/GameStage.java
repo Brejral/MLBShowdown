@@ -1,17 +1,16 @@
 package com.brejral.mlbshowdown.game;
 
 import java.util.Arrays;
+import java.util.List;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -24,31 +23,31 @@ import com.badlogic.gdx.scenes.scene2d.actions.RunnableAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SizeToAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.Align;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Pools;
 import com.badlogic.gdx.utils.Timer.Task;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.brejral.mlbshowdown.MLBShowdown;
-import com.brejral.mlbshowdown.ShapeActor;
-import com.brejral.mlbshowdown.ShapeActorLoader;
-import com.brejral.mlbshowdown.TextActor;
-import com.brejral.mlbshowdown.TextActorLoader;
-import com.brejral.mlbshowdown.TextActorLoader.TextActorParameter;
+import com.brejral.mlbshowdown.Tab;
+import com.brejral.mlbshowdown.TabContainer;
+import com.brejral.mlbshowdown.TabPane;
+import com.brejral.mlbshowdown.card.Card;
 import com.brejral.mlbshowdown.card.CardActor;
 import com.brejral.mlbshowdown.card.CardConstants;
-import com.brejral.mlbshowdown.card.Card;
 import com.brejral.mlbshowdown.team.Team;
 
 public class GameStage extends Stage {
    public MLBShowdown sd;
    public Game game;
-   public FreeTypeFontGenerator aeroGenerator;
-   public FreeTypeFontParameter fontParameter;
    AssetManager manager;
-   FreeTypeFontGenerator straightGenerator;
-   FreeTypeFontGenerator slantGenerator;
    BitmapFont straightCardFont;
    BitmapFont straightCardFont2;
    BitmapFont slantCardFont;
@@ -61,14 +60,8 @@ public class GameStage extends Stage {
       game = gm;
       sd = game.sd;
       manager = game.manager;
-      aeroGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
-      fontParameter = new FreeTypeFontParameter();
-      straightGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/US101.TTF"));
-      slantGenerator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Muroslant.ttf"));
-      fontParameter.size = 36;
-      slantCardFont = slantGenerator.generateFont(fontParameter);
-      fontParameter.size = 37;
-      slantCardFont2 = slantGenerator.generateFont(fontParameter);
+      slantCardFont = MLBShowdown.getMuroslantFont(36);
+      slantCardFont2 = MLBShowdown.getMuroslantFont(37);
       addListener(new InputListener() {
          @Override
          public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
@@ -82,81 +75,6 @@ public class GameStage extends Stage {
       });
    }
 
-   public static void loadActorsWithAssetManager(AssetManager manager) {
-      manager.setLoader(TextActor.class, new TextActorLoader(new InternalFileHandleResolver()));
-      manager.setLoader(ShapeActor.class, new ShapeActorLoader(new InternalFileHandleResolver()));
-
-      TextActorParameter textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 30);
-      manager.load("Pitch Text", TextActor.class, textParameter);
-      manager.load("Swing Text", TextActor.class, textParameter);
-      manager.load("Throw Text", TextActor.class, textParameter);
-
-      textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 50);
-      manager.load("Away Team Nickname", TextActor.class, textParameter);
-      manager.load("Home Team Nickname", TextActor.class, textParameter);
-
-      textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 20);
-      manager.load("Pitching Label", TextActor.class, textParameter);
-      manager.load("Batting Label", TextActor.class, textParameter);
-
-      textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 20);
-      manager.load("Chart Text", TextActor.class, textParameter);
-      manager.load("Result Text", TextActor.class, textParameter);
-      manager.load("Result Text2", TextActor.class, textParameter);
-      manager.load("Prompt Text", TextActor.class, textParameter);
-      manager.load("Inning", TextActor.class, textParameter);
-      for (String str : battingStats) {
-         manager.load("Batting Stat Header " + str, TextActor.class, textParameter);
-      }
-      for (String str : pitchingStats) {
-         manager.load("Pitching Stat Header " + str, TextActor.class, textParameter);
-      }
-
-      textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 15);
-      manager.load("Away Team Mini Scoreboard", TextActor.class, textParameter);
-      manager.load("Home Team Mini Scoreboard", TextActor.class, textParameter);
-      manager.load("Outs", TextActor.class, textParameter);
-
-      textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 15);
-      for (int i = 1; i < 10; i++) {
-         manager.load("Lineup Num " + i, TextActor.class, textParameter);
-         manager.load("Lineup Position " + i, TextActor.class, textParameter);
-         manager.load("Lineup Name " + i, TextActor.class, textParameter);
-      }
-      
-      textParameter = new TextActorParameter("Muro.ttf", 40);
-      manager.load("Inning Text", TextActor.class, textParameter);
-
-      textParameter = new TextActorParameter("Muro.ttf", 50);
-      manager.load("Away Score", TextActor.class, textParameter);
-      manager.load("Home Score", TextActor.class, textParameter);
-
-      String[] headers = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "R", "H", "E" };
-      TextActorParameter tp40 = new TextActorParameter("Muro.ttf", 40);
-      for (String str : headers) {
-         manager.load("Scoreboard Header " + str, TextActor.class, textParameter);
-         manager.load("Away " + str, TextActor.class, tp40);
-         manager.load("Home " + str, TextActor.class, tp40);
-      }
-      for (int i = 0; i < 15; i++) {
-         textParameter = new TextActorParameter("aero_matics_display_italic.ttf", 16);
-         manager.load("Batter Name " + (i + 1), TextActor.class, textParameter);
-         if (i < 8) {
-            manager.load("Pitcher Name " + (i + 1), TextActor.class, textParameter);
-         }
-
-         textParameter = new TextActorParameter("Muro.ttf", 16);
-         for (String str : battingStats) {
-            manager.load("Batter " + str + " " + (i + 1), TextActor.class, textParameter);
-         }
-         if (i < 8) {
-            for (String str : pitchingStats) {
-               manager.load("Pitcher " + str + " " + (i + 1), TextActor.class, textParameter);
-            }
-         }
-      }
-   }
-
    /**
     * Adds all the actors to the stage to be drawn
     */
@@ -165,19 +83,25 @@ public class GameStage extends Stage {
       diamond.setName("Field Background");
       addActor(diamond);
       
-      TextActor promptText = manager.get("Prompt Text");
+      Label promptText = new Label("", sd.skin, "aero20");
       promptText.setName("Prompt Text");
       promptText.setPosition(800, 300);
       promptText.setColor(Color.WHITE);
       addActor(promptText);
 
-      TextButtonStyle style = new TextButtonStyle();
-      fontParameter.size = 20;
-      style.fontColor = Color.WHITE;
-      style.font = aeroGenerator.generateFont(fontParameter);
-      style.overFontColor = Color.YELLOW;
+      TextButton menuButton = new TextButton("Menu", sd.skin);
+      menuButton.setName("Menu Button");
+      menuButton.setPosition(5, 575);
+      menuButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+            GameMenu menu = new GameMenu(sd.skin, game);
+            addActor(menu);
+         }
+      });
+      addActor(menuButton);
 
-      TextButton advanceNButton = new TextButton("Advance None", style);
+      TextButton advanceNButton = new TextButton("Advance None", sd.skin);
       advanceNButton.setName("Advance None Button");
       advanceNButton.setVisible(false);
       advanceNButton.addListener(new ClickListener() {
@@ -188,7 +112,7 @@ public class GameStage extends Stage {
       });
       addActor(advanceNButton);
 
-      TextButton advance3Button = new TextButton("Advance 3rd", style);
+      TextButton advance3Button = new TextButton("Advance 3rd", sd.skin);
       advance3Button.setName("Advance 3rd Button");
       advance3Button.setVisible(false);
       advance3Button.addListener(new ClickListener() {
@@ -199,7 +123,7 @@ public class GameStage extends Stage {
       });
       addActor(advance3Button);
 
-      TextButton advance2Button = new TextButton("Advance 2nd", style);
+      TextButton advance2Button = new TextButton("Advance 2nd", sd.skin);
       advance2Button.setName("Advance 2nd Button");
       advance2Button.setVisible(false);
       advance2Button.addListener(new ClickListener() {
@@ -210,7 +134,7 @@ public class GameStage extends Stage {
       });
       addActor(advance2Button);
 
-      TextButton advanceBButton = new TextButton("Advance Both", style);
+      TextButton advanceBButton = new TextButton("Advance Both", sd.skin);
       advanceBButton.setName("Advance Both Button");
       advanceBButton.setVisible(false);
       advanceBButton.addListener(new ClickListener() {
@@ -221,7 +145,7 @@ public class GameStage extends Stage {
       });
       addActor(advanceBButton);
 
-      TextButton throwHButton = new TextButton("Throw to Home", style);
+      TextButton throwHButton = new TextButton("Throw to Home", sd.skin);
       throwHButton.setName("Throw Home Button");
       throwHButton.setVisible(false);
       throwHButton.addListener(new ClickListener() {
@@ -232,7 +156,7 @@ public class GameStage extends Stage {
       });
       addActor(throwHButton);
 
-      TextButton throw3Button = new TextButton("Throw to 3rd", style);
+      TextButton throw3Button = new TextButton("Throw to 3rd", sd.skin);
       throw3Button.setName("Throw 3rd Button");
       throw3Button.setVisible(false);
       throw3Button.addListener(new ClickListener() {
@@ -242,11 +166,10 @@ public class GameStage extends Stage {
          }
       });
       addActor(throw3Button);
-
-      TextButton pitchButton = new TextButton("PITCH", style);
+      
+      TextButton pitchButton = new TextButton("Pitch", sd.skin);
       pitchButton.setName("Pitch Button");
       pitchButton.setPosition(800, 150);
-      pitchButton.setVisible(true);
       pitchButton.addListener(new ClickListener() {
          @Override
          public void clicked(InputEvent event, float x, float y) {
@@ -255,10 +178,9 @@ public class GameStage extends Stage {
       });
       addActor(pitchButton);
 
-      TextButton swingButton = new TextButton("SWING", style);
+      TextButton swingButton = new TextButton("Swing", sd.skin);
       swingButton.setName("Swing Button");
       swingButton.setPosition(800, 100);
-      swingButton.setVisible(true);
       swingButton.addListener(new ClickListener() {
          @Override
          public void clicked(InputEvent event, float x, float y) {
@@ -267,7 +189,7 @@ public class GameStage extends Stage {
       });
       addActor(swingButton);
 
-      TextButton throwButton = new TextButton("THROW", style);
+      TextButton throwButton = new TextButton("Throw", sd.skin);
       throwButton.setName("Throw Button");
       throwButton.setPosition(800, 50);
       throwButton.setVisible(false);
@@ -279,42 +201,64 @@ public class GameStage extends Stage {
       });
       addActor(throwButton);
 
-      TextActor pitchText = manager.get("Pitch Text");
+      Label pitchText = new Label("", sd.skin, "aero30");
       pitchText.setName("Pitch Text");
-      pitchText.setPosition(780, 165);
+      pitchText.setAlignment(Align.center);
       pitchText.setColor(Color.WHITE);
       addActor(pitchText);
-
-      TextActor chartText = manager.get("Chart Text");
-      chartText.setName("Chart Text");
-      chartText.setPosition(780, 140);
-      chartText.setColor(Color.WHITE);
-      addActor(chartText);
-
-      TextActor swingText = manager.get("Swing Text");
+      
+      Label swingText = new Label("", sd.skin, "aero30");
       swingText.setName("Swing Text");
-      swingText.setPosition(780, 115);
+      swingText.setAlignment(Align.center);
       swingText.setColor(Color.WHITE);
       addActor(swingText);
-
-      TextActor resultText = manager.get("Result Text");
-      resultText.setName("Result Text");
-      resultText.setPosition(780, 90);
-      resultText.setColor(Color.WHITE);
-      addActor(resultText);
-
-      TextActor throwText = manager.get("Throw Text");
+      
+      Label throwText = new Label("", sd.skin, "aero30");
       throwText.setName("Throw Text");
-      throwText.setPosition(780, 65);
+      throwText.setAlignment(Align.center);
       throwText.setColor(Color.WHITE);
       addActor(throwText);
 
-      TextActor resultText2 = manager.get("Result Text2");
+      Label chartText = new Label("", sd.skin, "aero20");
+      chartText.setName("Chart Text");
+      chartText.setAlignment(Align.left);
+      chartText.setColor(Color.WHITE);
+      addActor(chartText);
+
+      Label resultText = new Label("", sd.skin, "aero20");
+      resultText.setName("Result Text");
+      resultText.setAlignment(Align.center);
+      resultText.setColor(Color.WHITE);
+      addActor(resultText);
+
+      Label resultText2 = new Label("", sd.skin, "aero20");
       resultText2.setName("Result Text2");
-      resultText2.setPosition(780, 40);
+      resultText2.setAlignment(Align.left);
       resultText2.setColor(Color.WHITE);
       addActor(resultText2);
-
+      
+      Table actionTable = new Table();
+      actionTable.setPosition(780, 100);
+      addActor(actionTable);
+      actionTable.add(pitchText).right().padRight(4).height(30).width(40);
+      actionTable.add(pitchButton).left().width(100);
+      actionTable.row();
+      actionTable.add(chartText).colspan(2).height(25).left();
+      actionTable.row();
+      actionTable.add(swingText).right().padRight(4).height(30).width(40);
+      actionTable.add(swingButton).left().width(100);
+      actionTable.row();
+      actionTable.add(resultText).height(25).center();
+      actionTable.row();
+      actionTable.add(throwText).right().padRight(4).height(30).width(40);
+      actionTable.add(throwButton).left().width(100);
+      actionTable.row();
+      actionTable.add(resultText2).colspan(2).height(25).left();
+      
+      Group playerCardGroup = new Group();
+      playerCardGroup.setName("Player Card Group");
+      addActor(playerCardGroup);
+      
       addMiniScoreboardToStage();
 
       addScoreboardToStage();
@@ -326,7 +270,7 @@ public class GameStage extends Stage {
       removeSetupForThrowCheck();
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
       throwButton.setVisible(true);
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("Throw Home");
       disableButtons();
       game.scheduleThrowRoll();
@@ -336,7 +280,7 @@ public class GameStage extends Stage {
       removeSetupForThrowCheck();
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
       throwButton.setVisible(true);
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("Throw to 3rd");
       disableButtons();
       game.scheduleThrowRoll();
@@ -344,7 +288,7 @@ public class GameStage extends Stage {
 
    public void advanceBButtonClicked() {
       removeSetupForAdvancementCheck();
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("Throw to Base?");
       TextButton throw3Button = (TextButton) getRoot().findActor("Throw 3rd Button");
       throw3Button.setVisible(true);
@@ -366,7 +310,7 @@ public class GameStage extends Stage {
       removeSetupForAdvancementCheck();
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
       throwButton.setVisible(true);
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("Throw to 3rd");
       disableButtons();
       game.scheduleThrowRoll();
@@ -377,7 +321,7 @@ public class GameStage extends Stage {
       removeSetupForAdvancementCheck();
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
       throwButton.setVisible(true);
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("Throw Home");
       disableButtons();
       game.scheduleThrowRoll();
@@ -394,24 +338,21 @@ public class GameStage extends Stage {
    /**
     * Adds the scoreboard text to the stage
     */
-   public void addMiniScoreboardToStage() {
-      // Mini Scoreboard Group
-      Group scoreboard = new Group();
-      scoreboard.setName("Mini Scoreboard Group");
-      scoreboard.setZIndex(100);
-
-      Image image = new Image(game.sd.boardNP);
-      image.setName("Mini Scoreboard Background");
-      image.setSize(200, 100);
-      image.setPosition(700, 500);
-      image.setZIndex(0);
-      image.setTouchable(Touchable.enabled);
-      image.addListener(new ClickListener() {
+   private void addMiniScoreboardToStage() {
+      Table table = new Table();
+      table.setBackground(new NinePatchDrawable(game.sd.boardNP));
+      table.setName("Mini Scoreboard");
+      table.setSize(200, 80);
+      table.setPosition(700, 520);
+      table.setTouchable(Touchable.enabled);
+      table.addListener(new ClickListener() {
          @Override
          public void clicked(InputEvent event, float x, float y) {
             Actor board = event.getTarget();
-            if (board.getName().equals("Mini Scoreboard Background")) {
-               getRoot().findActor("Mini Scoreboard Group").setVisible(false);
+            if (board.getName().equals("Mini Scoreboard")) {
+               for (Actor actor : ((Table)getRoot().findActor("Mini Scoreboard")).getChildren()) {
+                  actor.setVisible(false);
+               }
                SequenceAction sequence = new SequenceAction();
                MoveToAction move = new MoveToAction();
                move.setPosition(0, 0);
@@ -424,252 +365,308 @@ public class GameStage extends Stage {
                sequence.addAction(new RunnableAction() {
                   @Override
                   public void run() {
-                     getRoot().findActor("Scoreboard Group").setVisible(true);
-                     getRoot().findActor("Scoreboard Group").setZIndex(101);
+                     getRoot().findActor("Scoreboard").setVisible(true);
+                     getRoot().findActor("Scoreboard").setZIndex(10000);
                      updateScoreboard();
-                     setAwayStatsTab();
+                     updateBoxScoreStats();
+                     updateGameLog();
                   }
                });
                board.addAction(sequence);
-               board.setZIndex(100);
+               board.setZIndex(10000);
                board.setName("Scoreboard Background");
             } else {
-               getRoot().findActor("Scoreboard Group").setVisible(false);
+               getRoot().findActor("Scoreboard").setVisible(false);
                SequenceAction sequence = new SequenceAction();
                MoveToAction move = new MoveToAction();
-               move.setPosition(700, 500);
+               move.setPosition(700, 520);
                move.setDuration(MLBShowdown.ANIMATION_SPEED);
                SizeToAction size = new SizeToAction();
-               size.setSize(200, 100);
+               size.setSize(200, 80);
                size.setDuration(MLBShowdown.ANIMATION_SPEED);
                ParallelAction parallel = new ParallelAction(move, size);
                sequence.addAction(parallel);
                sequence.addAction(new RunnableAction() {
                   @Override
                   public void run() {
-                     getRoot().findActor("Mini Scoreboard Group").setVisible(true);
-                     getRoot().findActor("Mini Scoreboard Group").setZIndex(101);
+                     for (Actor actor : ((Table)getRoot().findActor("Mini Scoreboard")).getChildren()) {
+                        actor.setVisible(true);
+                     }
                   }
                });
                board.addAction(sequence);
-               board.setZIndex(100);
-               board.setName("Mini Scoreboard Background");
+               board.setZIndex(10000);
+               board.setName("Mini Scoreboard");
             }
          }
       });
-      addActor(image);
+      addActor(table);
 
-      TextActor inningText = manager.get("Inning Text");
-      inningText.setText("1");
-      inningText.setName("Inning Text");
-      inningText.setPosition(795, 570);
-      inningText.setColor(Color.WHITE);
-      scoreboard.addActor(inningText);
-
-      TextActor innText = manager.get("Inning");
-      innText.setText("INNING");
-      innText.setName("Inning");
-      innText.setPosition(800, 540);
-      innText.setColor(Color.WHITE);
-      scoreboard.addActor(innText);
-
-      int innX = (int) (inningText.getX() + inningText.getWidth() / 2);
-      float[] itverts = { innX + 5, 571, innX + 10, 576, innX + 15, 571 };
-      ShapeActor inningTopMarker = new ShapeActor(ShapeType.Filled, itverts);
+      Image inningTopMarker = new Image(new Texture(Gdx.files.internal("images/triangle_yellow_up.png")));
       inningTopMarker.setName("Inning Top Marker");
-      inningTopMarker.setColor(Color.YELLOW);
-      scoreboard.addActor(inningTopMarker);
 
-      float[] ibverts = { innX + 5, 569, innX + 10, 564, innX + 15, 569 };
-      ShapeActor inningBottomMarker = new ShapeActor(ShapeType.Filled, ibverts);
+      Image inningBottomMarker = new Image(new Texture(Gdx.files.internal("images/triangle_yellow_down.png")));
       inningBottomMarker.setName("Inning Bottom Marker");
-      inningBottomMarker.setColor(Color.YELLOW);
       inningBottomMarker.setVisible(false);
-      scoreboard.addActor(inningBottomMarker);
 
-      TextActor homeTeamText = manager.get("Home Team Mini Scoreboard");
-      homeTeamText.setText(game.homeTeam.nickName);
+      Label homeTeamText = new Label(game.homeTeam.nickName, sd.skin, "aero15");
       homeTeamText.setName("Home Team Mini Scoreboard");
-      homeTeamText.setPosition(865, 520);
       homeTeamText.setColor(Color.WHITE);
-      scoreboard.addActor(homeTeamText);
 
-      TextActor awayTeamText = manager.get("Away Team Mini Scoreboard");
-      awayTeamText.setText(game.awayTeam.nickName);
+      Label awayTeamText = new Label(game.awayTeam.nickName, sd.skin, "aero15");
       awayTeamText.setName("Away Team Mini Scoreboard");
-      awayTeamText.setPosition(735, 520);
       awayTeamText.setColor(Color.WHITE);
-      scoreboard.addActor(awayTeamText);
 
-      TextActor homeScoreText = manager.get("Home Score");
+      Label inningText = new Label("1", sd.skin, "muro45");
+      inningText.setName("Inning Text");
+      inningText.setColor(Color.WHITE);
+      
+      Label homeScoreText = new Label(Integer.toString(game.homeScore), sd.skin, "muro50"); 
       homeScoreText.setName("Home Score");
-      homeScoreText.setText(Integer.toString(game.homeScore));
-      homeScoreText.setPosition(865, 555);
       homeScoreText.setColor(Color.WHITE);
-      scoreboard.addActor(homeScoreText);
 
-      TextActor awayScoreText = manager.get("Away Score");
+      Label awayScoreText = new Label(Integer.toString(game.awayScore), sd.skin, "muro50");
       awayScoreText.setName("Away Score");
-      awayScoreText.setText(Integer.toString(game.awayScore));
-      awayScoreText.setPosition(735, 555);
       awayScoreText.setColor(Color.WHITE);
-      scoreboard.addActor(awayScoreText);
 
-      TextActor outsText = manager.get("Outs");
+      Label outsText = new Label("OUTS", sd.skin, "aero15");
       outsText.setName("Outs");
-      outsText.setText("OUTS");
-      outsText.setPosition(788, 517);
       outsText.setColor(Color.WHITE);
-      scoreboard.addActor(outsText);
 
-      float[] verts1 = { 813, 515 };
-      ShapeActor outMarker1 = new ShapeActor(ShapeType.Filled, verts1, 4);
+      Image outMarker1 = new Image(sd.blackCircle);
       outMarker1.setName("Out Marker 1");
-      outMarker1.setColor(Color.BLACK);
-      scoreboard.addActor(outMarker1);
 
-      float[] verts2 = { 824, 515 };
-      ShapeActor outMarker2 = new ShapeActor(ShapeType.Filled, verts2, 4);
+      Image outMarker2 = new Image(sd.blackCircle);
       outMarker2.setName("Out Marker 2");
-      outMarker2.setColor(Color.BLACK);
-      scoreboard.addActor(outMarker2);
-
-      addActor(scoreboard);
+      
+      Table leftVGroup = new Table();
+      leftVGroup.add(awayScoreText).bottom().height(50);
+      leftVGroup.row();
+      leftVGroup.add(awayTeamText).center();
+      table.add(leftVGroup).width(65).center();
+      Table middleVGroup = new Table();
+      Table middleHGroup1 = new Table();
+      middleVGroup.add(middleHGroup1).colspan(3).height(45);
+      Table middleVGroup1 = new Table();
+      middleVGroup1.add(inningTopMarker).width(16).height(8).padLeft(-3);
+      middleVGroup1.row();
+      middleVGroup1.add(inningBottomMarker).width(16).height(8).padLeft(-3);
+      middleHGroup1.add(inningText);
+      middleHGroup1.add(middleVGroup1).padLeft(5);
+      middleVGroup.row();
+      middleVGroup.add(outsText);
+      middleVGroup.add(outMarker1).size(8).padLeft(2);
+      middleVGroup.add(outMarker2).size(8).padLeft(2);
+      table.add(middleVGroup).width(70).center();
+      Table rightVGroup = new Table();
+      rightVGroup.add(homeScoreText).bottom().height(50);
+      rightVGroup.row();
+      rightVGroup.add(homeTeamText).center();
+      table.add(rightVGroup).width(65).center();
    }
 
    /**
     * Adds the scoreboard and stats to stage
     */
-   public void addScoreboardToStage() {
+   private void addScoreboardToStage() {
       Group scoreboard = new Group();
       scoreboard.setVisible(false);
-      scoreboard.setName("Scoreboard Group");
+      scoreboard.setName("Scoreboard");
       addActor(scoreboard);
-
-      TextActor awayTeam = manager.get("Away Team Nickname");
-      awayTeam.setName("Away Team Nickname");
-      awayTeam.setText(game.awayTeam.nickName);
-      awayTeam.setAlignment(TextActor.RIGHT);
-      awayTeam.setPosition(200, 530);
-      awayTeam.setColor(Color.WHITE);
-      scoreboard.addActor(awayTeam);
-
-      TextActor homeTeam = manager.get("Home Team Nickname");
-      homeTeam.setName("Home Team Nickname");
-      homeTeam.setText(game.homeTeam.nickName);
-      homeTeam.setAlignment(TextActor.RIGHT);
-      homeTeam.setPosition(200, 490);
-      homeTeam.setColor(Color.WHITE);
-      scoreboard.addActor(homeTeam);
-
-      float[] vertsh = { 20, 548 };
-      ShapeActor lineh = new ShapeActor(ShapeType.Filled, vertsh, 810, 4);
-      lineh.setColor(Color.WHITE);
-      scoreboard.addActor(lineh);
-
+      
+      Table scoreboardTable = new Table();
+      scoreboardTable.setName("Scoreboard Table");
+      scoreboardTable.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture(Gdx.files.internal("images/scoreboard_grid.png")))));
+      scoreboardTable.setPosition(45, 470);
+      scoreboardTable.setSize(810, 125);
+      scoreboard.addActor(scoreboardTable);
+      scoreboardTable.add().width(190).height(50);
+      
       String[] headers = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "R", "H", "E" };
-      int x = 250;
-      for (String str : headers) {
-         TextActor inningNum = manager.get("Scoreboard Header " + str);
+      for (String str: headers) {
+         Label inningNum = new Label(str, sd.skin, "muro50");
          inningNum.setName("Scoreboard Header " + str);
-         inningNum.setText(str);
-         inningNum.setPosition(x, 575);
+         inningNum.setAlignment(Align.center);
          inningNum.setColor(Color.WHITE);
-         scoreboard.addActor(inningNum);
-
-         TextActor awayInningScore = manager.get("Away " + str);
-         awayInningScore.setName("Away " + str);
-         awayInningScore.setPosition(x, 525);
-         awayInningScore.setColor(Color.WHITE);
-         scoreboard.addActor(awayInningScore);
-
-         TextActor homeInningScore = manager.get("Home " + str);
-         homeInningScore.setName("Home " + str);
-         homeInningScore.setPosition(x, 485);
-         homeInningScore.setColor(Color.WHITE);
-         scoreboard.addActor(homeInningScore);
          if (str.equals("9")) {
-            float[] vertsv = { x + 33, 470 };
-            ShapeActor linev = new ShapeActor(ShapeType.Filled, vertsv, 4, 125);
-            linev.setColor(Color.WHITE);
-            scoreboard.addActor(linev);
-            x += 20;
+            scoreboardTable.add(inningNum).center().width(50).height(50).padRight(20);
+         } else {
+            scoreboardTable.add(inningNum).center().width(50).height(50);
          }
-         x += 50;
       }
-
-      float[] tsverts = { 4, 452 };
-      ShapeActor topShadow = new ShapeActor(ShapeType.Filled, tsverts, 447, 1);
-      topShadow.setName("Top Shadow");
-      topShadow.setColor(0, 0, 0, .3f);
-      scoreboard.addActor(topShadow);
-
-      float[] tlverts = { 4, 450 };
-      ShapeActor topLine = new ShapeActor(ShapeType.Filled, tlverts, 447, 2);
-      topLine.setName("Top Line");
-      topLine.setColor(Color.WHITE);
-      scoreboard.addActor(topLine);
-
-      float[] vlverts = { 449, 420 };
-      ShapeActor middleLine = new ShapeActor(ShapeType.Filled, vlverts, 2, 30);
-      middleLine.setColor(Color.WHITE);
-      scoreboard.addActor(middleLine);
-
-      float[] vsverts = { 451, 420 };
-      ShapeActor middleShadow = new ShapeActor(ShapeType.Filled, vsverts, 1, 33);
-      middleShadow.setName("Middle Shadow");
-      middleShadow.setColor(0, 0, 0, .3f);
-      scoreboard.addActor(middleShadow);
-
-      float[] bsverts = { 451, 422 };
-      ShapeActor bottomShadow = new ShapeActor(ShapeType.Filled, bsverts, 445, 1);
-      bottomShadow.setName("Bottom Shadow");
-      bottomShadow.setColor(0, 0, 0, .3f);
-      scoreboard.addActor(bottomShadow);
-
-      float[] blverts = { 450, 420 };
-      ShapeActor bottomLine = new ShapeActor(ShapeType.Filled, blverts, 448, 2);
-      bottomLine.setName("Bottom Line");
-      bottomLine.setColor(Color.WHITE);
-      scoreboard.addActor(bottomLine);
-
-      TextButtonStyle tbStyle = new TextButtonStyle();
-      fontParameter.size = 28;
-      tbStyle.font = aeroGenerator.generateFont(fontParameter);
-      tbStyle.fontColor = Color.WHITE;
-      tbStyle.overFontColor = Color.YELLOW;
-      TextButton homeTab = new TextButton(game.homeTeam.nickName, tbStyle);
-      homeTab.setSize(445, 28);
-      homeTab.setPosition(451, 422);
-      homeTab.addListener(new ClickListener() {
-         @Override
-         public void clicked(InputEvent event, float x, float y) {
-            setHomeStatsTab();
+      
+      scoreboardTable.row();
+      
+      Label awayTeam = new Label(game.awayTeam.nickName, sd.skin, "aero40");
+      awayTeam.setName("Away Team Nickname");
+      awayTeam.setAlignment(Align.right);
+      awayTeam.setColor(Color.WHITE);
+      scoreboardTable.add(awayTeam).width(190).height(38);
+      
+      for (String str : headers) {
+         Label awayInningScore = new Label("", sd.skin, "muro40");
+         awayInningScore.setName("Away " + str);
+         awayInningScore.setAlignment(Align.center);
+         awayInningScore.setColor(Color.WHITE);
+         if (str.equals("9")) {
+            scoreboardTable.add(awayInningScore).center().width(50).height(38).padRight(20);
+         } else {
+            scoreboardTable.add(awayInningScore).center().width(50).height(38);
          }
-      });
-      scoreboard.addActor(homeTab);
+      }
+      
+      scoreboardTable.row();
 
-      TextButton awayTab = new TextButton(game.awayTeam.nickName, tbStyle);
-      awayTab.setSize(445, 28);
-      awayTab.setPosition(4, 422);
-      awayTab.addListener(new ClickListener() {
-         @Override
-         public void clicked(InputEvent event, float x, float y) {
-            setAwayStatsTab();
+      Label homeTeam = new Label(game.homeTeam.nickName, sd.skin, "aero40");
+      homeTeam.setName("Home Team Nickname");
+      homeTeam.setAlignment(Align.right);
+      homeTeam.setColor(Color.WHITE);
+      scoreboardTable.add(homeTeam).width(190).height(38);
+
+      for (String str : headers) {
+         Label homeInningScore = new Label("", sd.skin, "muro40");
+         homeInningScore.setName("Home " + str);
+         homeInningScore.setAlignment(Align.center);
+         homeInningScore.setColor(Color.WHITE);
+         if (str.equals("9")) {
+            scoreboardTable.add(homeInningScore).center().width(50).height(38).padRight(20);
+         } else {
+            scoreboardTable.add(homeInningScore).center().width(50).height(38);
          }
-      });
-      scoreboard.addActor(awayTab);
+      }
+      
+      TabContainer boxScoreContainer = new TabContainer(sd.skin);
+      boxScoreContainer.setBackground(new NinePatchDrawable(sd.boardNP));
+      Tab boxScore = new Tab("Box Score", boxScoreContainer, sd.skin);
+      boxScore.setHeight(20);
+      TabContainer gameLogContainer = new TabContainer(sd.skin);
+      gameLogContainer.setBackground(new NinePatchDrawable(sd.boardNP));
+      Tab gameLog = new Tab("Game Log", gameLogContainer, sd.skin);
+      gameLog.setHeight(20);
+      TabPane tabPane = new TabPane(sd.skin);
+      tabPane.addTab(boxScore);
+      tabPane.addTab(gameLog);
+      tabPane.setPosition(5, 5);
+      tabPane.setSize(890, 465);
+      scoreboard.addActor(tabPane);
+      
+      setupBoxScore(boxScore);
 
-      addStatHeaders();
-
-      addStatRows();
+      setupGameLog(gameLog);
    }
 
-   public void updateScoreboard() {
+   private void setupBoxScore(Tab boxScore) {
+      TabContainer container = boxScore.getContainer();
+      Table table = new Table();
+      ScrollPane scrollPane = new ScrollPane(table);
+      scrollPane.setScrollBarPositions(false, true);
+      scrollPane.setScrollingDisabled(true, false);
+      container.add(scrollPane).fill().expand();
+      scrollPane.setFillParent(true);
+      
+      Table awayBatting = new Table();
+      awayBatting.setName("Away Batting Stats Table");
+      table.add(awayBatting).pad(30);
+      Label awayBattingLabel = new Label(game.awayTeam.nickName + " Batting", sd.skin, "aero20");
+      awayBattingLabel.setName("Away Batting Label");
+      awayBattingLabel.setColor(Color.WHITE);
+      awayBattingLabel.setAlignment(Align.left);
+      awayBatting.add(awayBattingLabel).width(150);
+      
+      for (String str : battingStats) {
+         Label header = new Label(str, sd.skin, "aero20");
+         header.setName("Away Batting Stat Header " + str);
+         header.setAlignment(Align.center);
+         header.setColor(Color.WHITE);
+         awayBatting.add(header).padLeft(4).padRight(4);
+      }
+      
+      for (int i = 1; i < 10; i++) {
+         addBatterStatRow(awayBatting, "Away", i);
+      }
+      
+      Table homeBatting = new Table();
+      homeBatting.setName("Home Batting Stats Table");
+      table.add(homeBatting).pad(30);
+      Label homeBattingLabel = new Label(game.homeTeam.nickName + " Batting", sd.skin, "aero20");
+      homeBattingLabel.setName("Home Batting Label");
+      homeBattingLabel.setColor(Color.WHITE);
+      homeBattingLabel.setAlignment(Align.left);
+      homeBatting.add(homeBattingLabel).width(150);
+      
+      for (String str : battingStats) {
+         Label header = new Label(str, sd.skin, "aero20");
+         header.setName("Home Batting Stat Header " + str);
+         header.setAlignment(Align.center);
+         header.setColor(Color.WHITE);
+         homeBatting.add(header).padLeft(4).padRight(4);
+      }
+      
+      for (int i = 1; i < 10; i++) {
+         addBatterStatRow(homeBatting, "Home", i);
+      }
+      
+      table.row();
+      
+      Table awayPitching = new Table();
+      awayPitching.setName("Away Pitching Stats Table");
+      table.add(awayPitching).pad(30);;
+      Label awayPitchingLabel = new Label(game.awayTeam.nickName + " Pitching", sd.skin, "aero20");
+      awayPitchingLabel.setName("Away Pitching Label");
+      awayPitchingLabel.setColor(Color.WHITE);
+      awayPitchingLabel.setAlignment(Align.left);
+      awayPitching.add(awayPitchingLabel).width(150);
+      
+      for (String str : pitchingStats) {
+         Label header = new Label(str, sd.skin, "aero20");
+         header.setName("Away Pitching Stat Header " + str);
+         header.setAlignment(Align.center);
+         header.setColor(Color.WHITE);
+         awayPitching.add(header).padLeft(4).padRight(4);
+      }
+      
+      addPitcherStatRow(awayPitching, "Away", 1);
+      
+      Table homePitching = new Table();
+      homePitching.setName("Home Pitching Stats Table");
+      table.add(homePitching).pad(30);;
+      Label homePitchingLabel = new Label(game.homeTeam.nickName + " Pitching", sd.skin, "aero20");
+      homePitchingLabel.setName("Home Pitching Label");
+      homePitchingLabel.setColor(Color.WHITE);
+      homePitchingLabel.setAlignment(Align.left);
+      homePitching.add(homePitchingLabel).width(150);
+      
+      for (String str : pitchingStats) {
+         Label header = new Label(str, sd.skin, "aero20");
+         header.setName("Home Pitching Stat Header " + str);
+         header.setAlignment(Align.center);
+         header.setColor(Color.WHITE);
+         homePitching.add(header).padLeft(4).padRight(4);
+      }
+      
+      addPitcherStatRow(homePitching, "Home", 1);
+   }
+   
+   private void setupGameLog(Tab gameLog) {
+      TabContainer container = gameLog.getContainer();
+      Label gameLogLabel = new Label("", sd.skin, "aero20");
+      gameLogLabel.setName("Game Log Label");
+      gameLogLabel.setAlignment(Align.left);
+      ScrollPane scrollPane = new ScrollPane(gameLogLabel);
+      scrollPane.setScrollBarPositions(false, true);
+      scrollPane.setScrollingDisabled(true, false);
+      container.add(scrollPane).fill().expand();
+   }
+   
+   private void updateGameLog() {
+      ((Label)getRoot().findActor("Game Log Label")).setText(game.gameLog.toString());
+   }
+
+   private void updateScoreboard() {
       String[] headers = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "R", "H", "E" };
       int i = 0;
       for (String str : headers) {
-         TextActor homeInningScore = (TextActor) getRoot().findActor("Home " + str);
+         Label homeInningScore = (Label) getRoot().findActor("Home " + str);
          if (game.homeScorePerInning.size() > i) {
             homeInningScore.setText(Integer.toString(game.homeScorePerInning.get(i)));
          } else if (str.equals("R")) {
@@ -679,7 +676,7 @@ public class GameStage extends Stage {
          } else if (str.equals("E")) {
             homeInningScore.setText(Integer.toString(game.homeErrors));
          }
-         TextActor awayInningScore = (TextActor) getRoot().findActor("Away " + str);
+         Label awayInningScore = (Label) getRoot().findActor("Away " + str);
          if (game.awayScorePerInning.size() > i) {
             awayInningScore.setText(Integer.toString(game.awayScorePerInning.get(i)));
          } else if (str.equals("R")) {
@@ -692,238 +689,168 @@ public class GameStage extends Stage {
          i++;
       }
    }
+   
+   private void updateBoxScoreStats() {
+      // Away Batting
+      List<Card> cards = game.awayTeam.getBattingStats();
+      int rows = ((Table)getRoot().findActor("Away Batting Stats Table")).getCells().size()/9;
+      int i = 1;
+      while (cards.size() > rows) {
+         addBatterStatRow((Table)getRoot().findActor("Away Batting Stats Table"), "Away", rows + i);
+         i++;
+      }
+      i = 1;
+      for (Card card : cards) {
+         updateBatterStatRow("Away", i, card);
+         i++;
+      }
+      
+      // Away Pitching
+      cards = game.awayTeam.getPitchingStats();
+      rows = ((Table)getRoot().findActor("Away Pitching Stats Table")).getCells().size()/9;
+      i = 1;
+      while (cards.size() > rows) {
+         addPitcherStatRow((Table)getRoot().findActor("Away Pitching Stats Table"), "Away", rows + i);
+         i++;
+      }
+      i = 1;
+      for (Card card : cards) {
+         updatePitcherStatRow("Away", i, card);
+         i++;
+      }
+      
+      // Home Batting
+      cards = game.homeTeam.getBattingStats();
+      rows = ((Table)getRoot().findActor("Home Batting Stats Table")).getCells().size()/9;
+      i = 1;
+      while (cards.size() > rows) {
+         addBatterStatRow((Table)getRoot().findActor("Home Batting Stats Table"), "Home", rows + i);
+         i++;
+      }
+      i = 1;
+      for (Card card : cards) {
+         updateBatterStatRow("Home", i, card);
+         i++;
+      }
+      
+      // Home Pitching
+      cards = game.homeTeam.getPitchingStats();
+      rows = ((Table)getRoot().findActor("Home Pitching Stats Table")).getCells().size()/9;
+      i = 1;
+      while (cards.size() > rows) {
+         addPitcherStatRow((Table)getRoot().findActor("Home Pitching Stats Table"), "Home", rows + i);
+         i++;
+      }
+      i = 1;
+      for (Card card : cards) {
+         updatePitcherStatRow("Home", i, card);
+         i++;
+      }
+   }
 
-   public void addStatHeaders() {
-      Group scoreboard = (Group) getRoot().findActor("Scoreboard Group");
-      TextActor hittingLabel = manager.get("Batting Label");
-      hittingLabel.setName("Batting Label");
-      hittingLabel.setText("Batting");
-      hittingLabel.setColor(Color.WHITE);
-      hittingLabel.setPosition(225, 400);
-      scoreboard.addActor(hittingLabel);
-
-      TextActor pitchingLabel = manager.get("Pitching Label");
-      pitchingLabel.setName("Pitching Label");
-      pitchingLabel.setText("Pitching");
-      pitchingLabel.setColor(Color.WHITE);
-      pitchingLabel.setPosition(675, 400);
-      scoreboard.addActor(pitchingLabel);
-
-      int x = 180;
+   private void updateBatterStatRow(String homeAway, int i, Card card) {
+      Group scoreboard = (Group) getRoot().findActor("Scoreboard");
+      Label name = (Label) scoreboard.findActor(homeAway + " Batting Name " + i);
+      name.setText(card.name);
       for (String str : battingStats) {
-         TextActor header = manager.get("Batting Stat Header " + str);
-         header.setName("Batting Stat Header " + str);
-         header.setText(str);
-         header.setColor(Color.WHITE);
-         header.setPosition(x, 370);
-         scoreboard.addActor(header);
-         x += 35;
+         Label stat = (Label) scoreboard.findActor(homeAway + " Batting " + str + " " + i);
+         stat.setText(game.statKeeper.getBattingStat(card.gameStats, str));
       }
-      x = 630;
+   }
+
+   private void updatePitcherStatRow(String homeAway, int i, Card card) {
+      Group scoreboard = (Group) getRoot().findActor("Scoreboard");
+      Label name = (Label) scoreboard.findActor(homeAway + " Pitching Name " + i);
+      name.setText(card.name);
       for (String str : pitchingStats) {
-         TextActor header = manager.get("Pitching Stat Header " + str);
-         header.setName("Pitching Stat Header " + str);
-         header.setText(str);
-         header.setColor(Color.WHITE);
-         header.setPosition(x, 370);
-         scoreboard.addActor(header);
-         x += 35;
+         Label stat = (Label) scoreboard.findActor(homeAway + " Pitching " + str + " " + i);
+         stat.setText(game.statKeeper.getPitchingStat(card.gameStats, str));
       }
    }
 
-   public void addStatRows() {
-      for (int i = 0; i < 15; i++) {
-         addBatterStatRow(i + 1);
-         if (i < 8) {
-            addPitcherStatRow(i + 1);
-         }
-      }
-   }
-
-   public void setAwayStatsTab() {
-      ShapeActor topShadow = (ShapeActor) getRoot().findActor("Top Shadow");
-      float[] tsverts = { 4, 452 };
-      topShadow.setVertices(tsverts);
-
-      ShapeActor topLine = (ShapeActor) getRoot().findActor("Top Line");
-      float[] tlverts = { 4, 450 };
-      topLine.setVertices(tlverts);
-
-      ShapeActor bottomShadow = (ShapeActor) getRoot().findActor("Bottom Shadow");
-      float[] bsverts = { 451, 422 };
-      bottomShadow.setVertices(bsverts);
-
-      ShapeActor bottomLine = (ShapeActor) getRoot().findActor("Bottom Line");
-      float[] blverts = { 450, 420 };
-      bottomLine.setVertices(blverts);
-
-      ShapeActor middleShadow = (ShapeActor) getRoot().findActor("Middle Shadow");
-      float[] msverts = { 451, 420 };
-      middleShadow.setVertices(msverts);
-
-      for (int i = 0; i < 15; i++) {
-         Card cardInfo = i < game.awayTeam.getBattingStats().size() ? game.awayTeam.getBattingStats().get(i) : null;
-         updateBatterStatRow(i + 1, cardInfo);
-         if (i < 8) {
-            cardInfo = i < game.awayTeam.getPitchingStats().size() ? game.awayTeam.getPitchingStats().get(i) : null;
-            updatePitcherStatRow(i + 1, cardInfo);
-         }
-      }
-   }
-
-   public void setHomeStatsTab() {
-      ShapeActor topShadow = (ShapeActor) getRoot().findActor("Top Shadow");
-      float[] tsverts = { 449, 452 };
-      topShadow.setVertices(tsverts);
-
-      ShapeActor topLine = (ShapeActor) getRoot().findActor("Top Line");
-      float[] tlverts = { 449, 450 };
-      topLine.setVertices(tlverts);
-
-      ShapeActor bottomShadow = (ShapeActor) getRoot().findActor("Bottom Shadow");
-      float[] bsverts = { 4, 422 };
-      bottomShadow.setVertices(bsverts);
-
-      ShapeActor bottomLine = (ShapeActor) getRoot().findActor("Bottom Line");
-      float[] blverts = { 2, 420 };
-      bottomLine.setVertices(blverts);
-
-      ShapeActor middleShadow = (ShapeActor) getRoot().findActor("Middle Shadow");
-      float[] msverts = { 448, 420 };
-      middleShadow.setVertices(msverts);
-
-      for (int i = 0; i < 15; i++) {
-         Card card = i < game.homeTeam.getBattingStats().size() ? game.homeTeam.getBattingStats().get(i) : null;
-         updateBatterStatRow(i + 1, card);
-         if (i < 8) {
-            card = i < game.homeTeam.getPitchingStats().size() ? game.homeTeam.getPitchingStats().get(i) : null;
-            updatePitcherStatRow(i + 1, card);
-         }
-      }
-   }
-
-   private void updateBatterStatRow(int i, Card cardInfo) {
-      Group scoreboard = (Group) getRoot().findActor("Scoreboard Group");
-      TextActor name = (TextActor) scoreboard.findActor("Batter Name " + i);
-      name.setText(cardInfo != null ? cardInfo.name : "");
-      for (String str : battingStats) {
-         TextActor stat = (TextActor) scoreboard.findActor("Batter " + str + " " + i);
-         stat.setText(cardInfo != null ? game.statKeeper.getBattingStat(cardInfo.gameStats, str) : "");
-      }
-   }
-
-   private void updatePitcherStatRow(int i, Card card) {
-      Group scoreboard = (Group) getRoot().findActor("Scoreboard Group");
-      TextActor name = (TextActor) scoreboard.findActor("Pitcher Name " + i);
-      name.setText(card != null ? card.name : "");
-      for (String str : pitchingStats) {
-         TextActor stat = (TextActor) scoreboard.findActor("Pitcher " + str + " " + i);
-         stat.setText(card != null ? game.statKeeper.getPitchingStat(card.gameStats, str) : "");
-      }
-   }
-
-   private void addBatterStatRow(int i) {
-      Group scoreboard = (Group) getRoot().findActor("Scoreboard Group");
-      int y = 370 - 20 * i;
-      TextActor name = manager.get("Batter Name " + i);
-      name.setName("Batter Name " + i);
+   private void addBatterStatRow(Table table, String homeAway, int i) {
+      table.row();
+      Label name = new Label("", sd.skin, "aero16");
+      name.setName(homeAway + " Batting Name " + i);
       name.setColor(Color.WHITE);
-      name.setAlignment(TextActor.LEFT);
-      name.setPosition(10, y);
-      scoreboard.addActor(name);
+      name.setAlignment(Align.left);
+      table.add(name).width(150);
 
-      int x = 180;
       for (String str : battingStats) {
-         TextActor stat = manager.get("Batter " + str + " " + i);
-         stat.setName("Batter " + str + " " + i);
+         Label stat = new Label("", sd.skin, "muro16");
+         stat.setName(homeAway + " Batting " + str + " " + i);
+         stat.setAlignment(Align.center);
          stat.setColor(Color.WHITE);
-         stat.setPosition(x, y);
-         scoreboard.addActor(stat);
-         x += 35;
+         table.add(stat).padLeft(4).padRight(4);
       }
    }
 
-   private void addPitcherStatRow(int i) {
-      Group scoreboard = (Group) getRoot().findActor("Scoreboard Group");
-      int y = 370 - 20 * i;
-      TextActor name = manager.get("Pitcher Name " + i);
-      name.setName("Pitcher Name " + i);
+   private void addPitcherStatRow(Table table, String homeAway, int i) {
+      table.row();
+      Label name = new Label("", sd.skin, "aero16");
+      name.setName(homeAway + " Pitching Name " + i);
       name.setColor(Color.WHITE);
-      name.setAlignment(TextActor.LEFT);
-      name.setPosition(460, y);
-      scoreboard.addActor(name);
+      name.setAlignment(Align.left);
+      table.add(name).width(150);
 
-      int x = 630;
       for (String str : pitchingStats) {
-         TextActor stat = manager.get("Pitcher " + str + " " + i);
-         stat.setName("Pitcher " + str + " " + i);
+         Label stat = new Label("", sd.skin, "muro16");
+         stat.setName(homeAway + " Pitching " + str + " " + i);
          stat.setColor(Color.WHITE);
-         stat.setPosition(x, y);
-         scoreboard.addActor(stat);
-         x += 35;
+         stat.setAlignment(Align.center);
+         table.add(stat).padLeft(4).padRight(4);
       }
    }
 
    /**
     * Adds the lineup text to the stage
     */
-   public void addLineupTextToStage() {
+   private void addLineupTextToStage() {
       Group lineup = new Group();
       lineup.setName("Lineup Group");
       addActor(lineup);
-
-      int x1 = 10;
-      int x2 = 25;
-      int x3 = 38;
-      int y = 125;
-      int ydiff = 14;
-
-      Image lineupBackground = new Image(game.sd.boardNP);
-      lineupBackground.setName("Lineup Background");
-      lineupBackground.setPosition(0, 0);
-      lineupBackground.setSize(150, 138);
-      lineupBackground.addListener(new InputListener() {
+      
+      Table table = new Table();
+      table.setName("Lineup Table");
+      table.setBackground(new NinePatchDrawable(game.sd.boardNP));
+      table.setPosition(0, 0);
+      table.setSize(155, 145);
+      table.center();
+      table.addListener(new InputListener() {
          @Override
          public void enter(InputEvent event, float x, float y, int pointer, Actor fromActor) {
             if (fromActor == null || !fromActor.getName().equals("Lineup Card")) {
                game.timer.scheduleTask(new Task() {
                   @Override
                   public void run() {
-                     getRoot().findActor("Lineup Card").setZIndex(1000);
                      getRoot().findActor("Lineup Card").setVisible(true);
+                     getRoot().findActor("Lineup Card").setZIndex(10000);
                   }
                }, 2);
             }
          }
       });
-      lineup.addActor(lineupBackground);
+      addActor(table);
+      
+      Table innerTable = new Table();
+      table.add(innerTable).width(table.getWidth()).padLeft(5).left();
 
       for (int i = 0; i < 9; i++) {
-         TextActor num = manager.get("Lineup Num " + (i + 1));
+         Label num = new Label(Integer.toString(i + 1), sd.skin, "aero15");
          num.setName("Lineup Num " + (i + 1));
-         num.setText(Integer.toString(i + 1));
-         num.setPosition(x1, y);
-         num.setColor(i == 0 ? Color.YELLOW : Color.WHITE);
-         lineup.addActor(num);
-         TextActor pos = manager.get("Lineup Position " + (i + 1));
+         num.setAlignment(Align.center);
+         innerTable.add(num).width(12).height(15).center();
+         Label pos = new Label("", sd.skin, "aero15");
          pos.setName("Lineup Position " + (i + 1));
-         pos.setPosition(x2, y);
-         pos.setColor(i == 0 ? Color.YELLOW : Color.WHITE);
-         lineup.addActor(pos);
-         TextActor name = manager.get("Lineup Name " + (i + 1));
+         pos.setAlignment(Align.center);
+         innerTable.add(pos).width(24).height(15).center();
+         Label name = new Label("", sd.skin, "aero15");
          name.setName("Lineup Name " + (i + 1));
-         name.setAlignment(TextActor.LEFT);
-         name.setPosition(x3, y);
-         name.setColor(i == 0 ? Color.YELLOW : Color.WHITE);
-         lineup.addActor(name);
-         y -= ydiff;
+         innerTable.add(name).expandX().height(15).left();
+         innerTable.row();
       }
-      // This was added because of a bug when the lineup card is shown
-      // The last actor flashes when the card is rendering.
-      // This is a useless actor
-      lineup.addActor(new TextActor(".", "Muro.ttf", 3));
 
-      lineup.addActor(new LineupCard());
+      addActor(new LineupCard());
       setLineupText();
    }
    
@@ -933,7 +860,7 @@ public class GameStage extends Stage {
    }
 
    public void setupStageForAdvancementCheck() {
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       TextButton advanceNButton = (TextButton) getRoot().findActor("Advance None Button");
       TextButton advance2Button = (TextButton) getRoot().findActor("Advance 2nd Button");
       TextButton advance3Button = (TextButton) getRoot().findActor("Advance 3rd Button");
@@ -977,7 +904,7 @@ public class GameStage extends Stage {
    }
 
    public void removeSetupForAdvancementCheck() {
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("");
       getRoot().findActor("Advance None Button").setVisible(false);
       getRoot().findActor("Advance 2nd Button").setVisible(false);
@@ -992,14 +919,14 @@ public class GameStage extends Stage {
 
    public void setupStageForDoublePlayCheck() {
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       if (game.checkForDoublePlay) {
          throwButton.setVisible(true);
          promptText.setText("Double Play Roll");
       } else {
          throwButton.setVisible(false);
-         TextActor result2 = (TextActor) getRoot().findActor("Result Text2");
-         TextActor throwText = (TextActor) getRoot().findActor("Throw Text");
+         Label result2 = (Label) getRoot().findActor("Result Text2");
+         Label throwText = (Label) getRoot().findActor("Throw Text");
          result2.setText("");
          throwText.setText("");
          promptText.setText("");
@@ -1039,8 +966,8 @@ public class GameStage extends Stage {
          team = game.homeTeam;
       }
       for (int i = 0; i < 9; i++) {
-         TextActor pos = (TextActor) getRoot().findActor("Lineup Position " + (i + 1));
-         TextActor name = (TextActor) getRoot().findActor("Lineup Name " + (i + 1));
+         Label pos = (Label) getRoot().findActor("Lineup Position " + (i + 1));
+         Label name = (Label) getRoot().findActor("Lineup Name " + (i + 1));
          pos.setText(team.getPosition(team.lineup.get(i)));
          name.setText(team.lineup.get(i).name);
       }
@@ -1050,7 +977,7 @@ public class GameStage extends Stage {
     * Sets the pitch text based on the pitch roll
     */
    public void setPitchText() {
-      TextActor text = (TextActor) getRoot().findActor("Pitch Text");
+      Label text = (Label) getRoot().findActor("Pitch Text");
       if ((game.isFieldingTeamUser() && game.isPChart)
             || (game.isBattingTeamUser() && !game.isPChart)) {
          text.setColor(Color.GREEN);
@@ -1065,7 +992,7 @@ public class GameStage extends Stage {
     * Sets the swing text based on the swing roll
     */
    public void setSwingText() {
-      TextActor text = (TextActor) getRoot().findActor("Swing Text");
+      Label text = (Label) getRoot().findActor("Swing Text");
       if ((game.isFieldingTeamUser() && Arrays.asList(CardConstants.CHART_TEXT).indexOf(game.result) <= 3)
             || (game.isBattingTeamUser() && Arrays.asList(CardConstants.CHART_TEXT).indexOf(game.result) > 3)) {
          text.setColor(Color.GREEN);
@@ -1077,7 +1004,7 @@ public class GameStage extends Stage {
    }
 
    public void setThrowText() {
-      TextActor text = (TextActor) getRoot().findActor("Throw Text");
+      Label text = (Label) getRoot().findActor("Throw Text");
       if ((game.isFieldingTeamUser() && (game.result2.contains("Out") || game.result2.equals("Double Play")))
             || (game.isBattingTeamUser() && game.result2.contains("Safe"))) {
          text.setColor(Color.GREEN);
@@ -1095,7 +1022,7 @@ public class GameStage extends Stage {
     * Sets the chart text (Batter's or Pitcher's) based on the
     */
    public void setChartText() {
-      TextActor text = (TextActor) getRoot().findActor("Chart Text");
+      Label text = (Label) getRoot().findActor("Chart Text");
       if ((game.isFieldingTeamUser() && game.isPChart)
             || (game.isBattingTeamUser() && !game.isPChart)) {
          text.setColor(Color.GREEN);
@@ -1109,7 +1036,7 @@ public class GameStage extends Stage {
     * Sets the result text based on the result
     */
    public void setResultText() {
-      TextActor text = (TextActor) getRoot().findActor("Result Text");
+      Label text = (Label) getRoot().findActor("Result Text");
       if ((game.isFieldingTeamUser() && Arrays.asList(CardConstants.CHART_TEXT).indexOf(game.result) <= 3)
             || (game.isBattingTeamUser() && Arrays.asList(CardConstants.CHART_TEXT).indexOf(game.result) > 3)) {
          text.setColor(Color.GREEN);
@@ -1120,7 +1047,7 @@ public class GameStage extends Stage {
    }
 
    public void setResultText2() {
-      TextActor text = (TextActor) getRoot().findActor("Result Text2");
+      Label text = (Label) getRoot().findActor("Result Text2");
       if ((game.isFieldingTeamUser() && (game.result2.contains("Out") || game.result2.equals("Double Play")))
             || (game.isBattingTeamUser() && game.result2.contains("Safe"))) {
          text.setColor(Color.GREEN);
@@ -1134,7 +1061,7 @@ public class GameStage extends Stage {
     * Sets the inning text based on the inning
     */
    public void setInningText() {
-      TextActor text = (TextActor) getRoot().findActor("Inning Text");
+      Label text = (Label) getRoot().findActor("Inning Text");
       text.setText(Integer.toString(game.inning));
    }
 
@@ -1142,17 +1069,17 @@ public class GameStage extends Stage {
     * Sets the out markers based on the number of outs
     */
    public void setOutMarkers() {
-      ShapeActor marker1 = (ShapeActor) getRoot().findActor("Out Marker 1");
-      ShapeActor marker2 = (ShapeActor) getRoot().findActor("Out Marker 2");
+      Image marker1 = (Image) getRoot().findActor("Out Marker 1");
+      Image marker2 = (Image) getRoot().findActor("Out Marker 2");
       if (game.outs == 0) {
-         marker1.setColor(Color.BLACK);
-         marker2.setColor(Color.BLACK);
+         marker1.setDrawable(new SpriteDrawable(new Sprite(sd.blackCircle)));
+         marker2.setDrawable(new SpriteDrawable(new Sprite(sd.blackCircle)));
       } else if (game.outs == 1) {
-         marker1.setColor(Color.YELLOW);
-         marker2.setColor(Color.BLACK);
+         marker1.setDrawable(new SpriteDrawable(new Sprite(sd.yellowCircle)));
+         marker2.setDrawable(new SpriteDrawable(new Sprite(sd.blackCircle)));
       } else {
-         marker1.setColor(Color.YELLOW);
-         marker2.setColor(Color.YELLOW);
+         marker1.setDrawable(new SpriteDrawable(new Sprite(sd.yellowCircle)));
+         marker2.setDrawable(new SpriteDrawable(new Sprite(sd.yellowCircle)));
       }
    }
 
@@ -1160,14 +1087,8 @@ public class GameStage extends Stage {
     * Sets the top or bottom arrow by the inning
     */
    public void setTopBottomInningMarker() {
-      TextActor act = (TextActor) getRoot().findActor("Inning Text");
-      int x = (int) (act.getX() + act.getWidth() / 2);
-      float[] itverts = { x + 5, 571, x + 10, 576, x + 15, 571 };
-      ShapeActor markert = (ShapeActor) getRoot().findActor("Inning Top Marker");
-      markert.setVertices(itverts);
-      float[] ibverts = { x + 5, 569, x + 10, 564, x + 15, 569 };
-      ShapeActor markerb = (ShapeActor) getRoot().findActor("Inning Bottom Marker");
-      markerb.setVertices(ibverts);
+      Image markert = (Image) getRoot().findActor("Inning Top Marker");
+      Image markerb = (Image) getRoot().findActor("Inning Bottom Marker");
       if (game.isTop) {
          markert.setVisible(true);
          markerb.setVisible(false);
@@ -1181,14 +1102,14 @@ public class GameStage extends Stage {
     * Sets the away and home score
     */
    public void setScoreText() {
-      TextActor home = (TextActor) getRoot().findActor("Home Score");
-      TextActor away = (TextActor) getRoot().findActor("Away Score");
+      Label home = (Label) getRoot().findActor("Home Score");
+      Label away = (Label) getRoot().findActor("Away Score");
       home.setText(Integer.toString(game.homeScore));
       away.setText(Integer.toString(game.awayScore));
    }
 
    public void removePromptText() {
-      TextActor promptText = (TextActor) getRoot().findActor("Prompt Text");
+      Label promptText = (Label) getRoot().findActor("Prompt Text");
       promptText.setText("");
    }
 
@@ -1201,25 +1122,37 @@ public class GameStage extends Stage {
       TextButton throwButton = (TextButton) getRoot().findActor("Throw Button");
       if (game.isFieldingTeamCpu()) {
          pitchButton.setTouchable(Touchable.disabled);
+         pitchButton.setDisabled(true);
       } else {
          pitchButton.setTouchable(Touchable.enabled);
+         pitchButton.setDisabled(false);
       }
       if (game.isBattingTeamCpu()) {
          swingButton.setTouchable(Touchable.disabled);
+         swingButton.setDisabled(true);
       } else {
          swingButton.setTouchable(Touchable.enabled);
+         swingButton.setDisabled(false);
       }
       if (game.isFieldingTeamCpu() && throwButton.isVisible()) {
          throwButton.setTouchable(Touchable.disabled);
+         throwButton.setDisabled(true);
       } else {
          throwButton.setTouchable(Touchable.enabled);
+         throwButton.setDisabled(false);
       }
-      if (game.pitch > 0)
+      if (game.pitch > 0) {
          pitchButton.setTouchable(Touchable.disabled);
-      if (game.swing > 0 || game.pitch == 0)
+         pitchButton.setDisabled(true);
+      }
+      if (game.swing > 0 || game.pitch == 0) {
          swingButton.setTouchable(Touchable.disabled);
-      if ((game.fieldingThrow > 0 || game.swing == 0) && throwButton.isVisible())
+         swingButton.setDisabled(true);
+      }
+      if ((game.fieldingThrow > 0 || game.swing == 0) && throwButton.isVisible()) {
          throwButton.setTouchable(Touchable.disabled);
+         swingButton.setDisabled(true);
+      }
    }
 
    private class LineupCard extends Actor {
@@ -1233,8 +1166,8 @@ public class GameStage extends Stage {
          setName("Lineup Card");
          setVisible(false);
          setScale(.6f);
-         lheight = getRoot().findActor("Lineup Background").getHeight();
-         lwidth = getRoot().findActor("Lineup Background").getWidth();
+         lheight = getRoot().findActor("Lineup Table").getHeight();
+         lwidth = getRoot().findActor("Lineup Table").getWidth();
       }
 
       private void setTexture() {
@@ -1252,7 +1185,7 @@ public class GameStage extends Stage {
                   cardActor = Pools.obtain(CardActor.class);
                }
                cardActor.setCardInfo(team.lineup.get(index));
-               texture = cardActor.cardTexture;
+               texture = cardActor.card.cardTexture;
             }
             setVisible(true);
             setSize(texture.getRegionWidth(), texture.getRegionHeight());
@@ -1272,7 +1205,7 @@ public class GameStage extends Stage {
 
       @Override
       public void setVisible(boolean visible) {
-         setZIndex(1000);
+         setZIndex(10000);
          super.setVisible(visible);
       };
 

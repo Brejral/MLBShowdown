@@ -3,6 +3,7 @@ package com.brejral.mlbshowdown.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.brejral.mlbshowdown.MLBShowdown;
 
@@ -40,6 +41,7 @@ public class GameScreen implements Screen {
 
       stage.act(Gdx.graphics.getDeltaTime());
       stage.draw();
+      Table.drawDebug(stage);
    }
 
    @Override

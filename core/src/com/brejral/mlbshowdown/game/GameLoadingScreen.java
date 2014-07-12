@@ -6,13 +6,8 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.math.Rectangle;
 import com.brejral.mlbshowdown.MLBShowdown;
 import com.brejral.mlbshowdown.team.Team;
@@ -24,14 +19,9 @@ public class GameLoadingScreen implements Screen {
    Game game;
    SpriteBatch batch;
    Rectangle borderInner, borderOuter, progressBar;
-   FreeTypeFontGenerator generator;
-   FreeTypeFontParameter fontParameter;
-   BitmapFont aeroDisplayItalicFont36;
-   Texture emptyTexture;
-   Texture fullTexture;
-   NinePatch emptyNp;
-   NinePatch fullNp;
+   BitmapFont font;
    long timeStart;
+   boolean renderedOnce = false;
 
    public GameLoadingScreen(MLBShowdown showdown) {
       timeStart = System.currentTimeMillis();
@@ -40,15 +30,7 @@ public class GameLoadingScreen implements Screen {
       manager.setLoader(Team.class, new TeamLoader(new InternalFileHandleResolver()));
       game = new Game(sd, manager);
       batch = new SpriteBatch();
-      generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
-      fontParameter = new FreeTypeFontParameter();
-      fontParameter.size = 24;
-      aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
-      emptyTexture = new Texture(Gdx.files.internal("images/empty.png"));
-      fullTexture = new Texture(Gdx.files.internal("images/full.png"));
-      emptyNp = new NinePatch(new TextureRegion(emptyTexture, 24, 24), 8, 8, 8, 8);
-      fullNp = new NinePatch(new TextureRegion(fullTexture, 24, 24), 8, 8, 8, 8);
-      GameStage.loadActorsWithAssetManager(manager);
+      font = MLBShowdown.getAeroItalicFont(70);
    }
 
    private void doneLoading() {
@@ -58,22 +40,19 @@ public class GameLoadingScreen implements Screen {
 
    @Override
    public void render(float delta) {
-      if (manager.update()) {
-         doneLoading();
-      }
-
       Gdx.gl.glClearColor(73f / 255f, 145f / 255f, 94f / 255f, 1);
       Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
       batch.begin();
       batch.draw(sd.fieldTexture, 0, 0);
-      float progress = manager.getProgress();
-      emptyNp.draw(batch, 90, 285, 720, 30);
-      fullNp.draw(batch, 90, 285, 720 * progress, 30);
-      aeroDisplayItalicFont36.setColor(Color.BLACK);
-      aeroDisplayItalicFont36.drawMultiLine(batch, (int) (progress * 100) + "% Loaded", 450, 310, 0, BitmapFont.HAlignment.CENTER);
+      font.setColor(Color.WHITE);
+      font.drawMultiLine(batch, "Loading...", 450, 595, 0, BitmapFont.HAlignment.CENTER);
       batch.end();
-      System.out.println();
+      
+      if (renderedOnce && manager.update()) {
+         doneLoading();
+      }
+      renderedOnce = true;
    }
 
    @Override

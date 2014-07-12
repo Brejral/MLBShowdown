@@ -12,15 +12,11 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFont.TextBounds;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.brejral.mlbshowdown.MLBShowdown;
 
 public class MainMenu implements Screen {
 	final MLBShowdown sd;
 	SpriteBatch batch;
-	FreeTypeFontGenerator generator;
-	FreeTypeFontParameter fontParameter;
 	BitmapFont aeroDisplayItalicFont72;
 	BitmapFont aeroDisplayItalicFont36;
 	List<MenuItem> menuList;
@@ -28,12 +24,8 @@ public class MainMenu implements Screen {
 	public MainMenu(final MLBShowdown showdown) {
 		sd = showdown;
 		batch = new SpriteBatch();
-		generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
-		fontParameter = new FreeTypeFontParameter();
-		fontParameter.size = 72;
-		aeroDisplayItalicFont72 = generator.generateFont(fontParameter);
-		fontParameter.size = 36;
-		aeroDisplayItalicFont36 = generator.generateFont(fontParameter);
+		aeroDisplayItalicFont72 = MLBShowdown.getAeroItalicFont(72);
+		aeroDisplayItalicFont36 = MLBShowdown.getAeroItalicFont(36);
 		menuList = new ArrayList<MenuItem>();
 		menuList.add(new MenuItem("Exhibition", 500, new ExhibitionMenu(sd)));
 		menuList.add(new MenuItem("Season", 450));
@@ -119,7 +111,6 @@ public class MainMenu implements Screen {
 		aeroDisplayItalicFont72.dispose();
 		aeroDisplayItalicFont36.dispose();
 		batch.dispose();
-		generator.dispose();
 	}
 
 	public class MenuItem {

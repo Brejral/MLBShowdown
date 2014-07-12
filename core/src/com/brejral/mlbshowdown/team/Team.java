@@ -29,7 +29,7 @@ public class Team {
    public List<Card> rotation = new ArrayList<Card>();
    public List<Card> bench = new ArrayList<Card>();
    public List<String> rosterNums, lineupNums, rotationNums, positionsNums, bullpenNums, benchNums;
-   public String fullName, location, nickName;
+   public String fullName, location, nickName, abrev;
    public Texture logo;
    public int points, rotationSpot, lineupSpot = 0;
    public boolean isNL = false;
@@ -49,6 +49,10 @@ public class Team {
       try {
          StringBuilder query = new StringBuilder("Select * from teams where nickname = '" + nickName + "';");
          cursor = db.rawQuery(query.toString());
+         fullName = cursor.getString(1);
+         location = cursor.getString(2);
+         abrev = cursor.getString(11);
+         isNL = cursor.getInt(10) > 0 ? true : false;
 
          // Get Roster
          String str = cursor.getString(4);
@@ -116,7 +120,7 @@ public class Team {
       }
       for (String num : positionsNums) {
          if (num.equals("0")) {
-            positions.add(rotation.get(1));
+            positions.add(rotation.get(rotationSpot));
          } else {
             positions.add(getCardInfoFromRoster(num));
          }

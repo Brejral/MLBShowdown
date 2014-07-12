@@ -5,8 +5,6 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.Touchable;
@@ -21,19 +19,14 @@ public class GameStatsScreen implements Screen {
    public Game game;
    public Screen screen;
    public Stage stage;
-   public FreeTypeFontGenerator generator;
-   public FreeTypeFontParameter parameter = new FreeTypeFontParameter();
    public BitmapFont teamText, statText;
 
    public GameStatsScreen(Game gm, Screen scrn) {
       game = gm;
       sd = game.sd;
       screen = scrn;
-      generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/aero_matics_display_italic.ttf"));
-      parameter.size = 30;
-      teamText = generator.generateFont(parameter);
-      parameter.size = 20;
-      statText = generator.generateFont(parameter);
+      teamText = MLBShowdown.getAeroItalicFont(30);
+      statText = MLBShowdown.getAeroItalicFont(20);
       stage = new Stage();
       addActorsToStage();
 
@@ -87,8 +80,7 @@ public class GameStatsScreen implements Screen {
       TextButtonStyle style = new TextButtonStyle();
       style.fontColor = Color.WHITE;
       style.overFontColor = Color.YELLOW;
-      parameter.size = 20;
-      style.font = generator.generateFont(parameter);
+      style.font = statText;
       TextButton backButton = new TextButton("Back", style);
       backButton.setPosition(850, 570);
       backButton.setTouchable(Touchable.enabled);
