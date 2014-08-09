@@ -1,38 +1,32 @@
 package com.brejral.mlbshowdown.menu;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.BitmapFont.TextBounds;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.Align;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.brejral.mlbshowdown.MLBShowdown;
 
 public class MainMenu implements Screen {
 	final MLBShowdown sd;
 	SpriteBatch batch;
-	BitmapFont aeroDisplayItalicFont72;
-	BitmapFont aeroDisplayItalicFont36;
-	List<MenuItem> menuList;
+	Stage stage;
 	
 	public MainMenu(final MLBShowdown showdown) {
 		sd = showdown;
-		batch = new SpriteBatch();
-		aeroDisplayItalicFont72 = MLBShowdown.getAeroItalicFont(72);
-		aeroDisplayItalicFont36 = MLBShowdown.getAeroItalicFont(36);
-		menuList = new ArrayList<MenuItem>();
-		menuList.add(new MenuItem("Exhibition", 500, new ExhibitionMenu(sd)));
-		menuList.add(new MenuItem("Season", 450));
-		menuList.add(new MenuItem("Tournament", 400));
-		menuList.add(new MenuItem("Management", 350));
-		menuList.add(new MenuItem("Statistics", 300));
-		menuList.add(new MenuItem("Settings", 250));
+		stage = new Stage(new ScreenViewport());
+		addActorsToStage();
 	}
 	
 	@Override
@@ -40,111 +34,108 @@ public class MainMenu implements Screen {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
-		batch.begin();
-		batch.setColor(1, 1, 1, .5f);
-		batch.draw(sd.fieldTexture, 0, 0);
-		drawMenuText();
-		batch.end();
-		
-		processUserInput();
+		stage.act(Gdx.graphics.getDeltaTime());
+      stage.draw();
+      Table.drawDebug(stage);
 	}
 	
-	private void drawMenuText() {
-		aeroDisplayItalicFont72.draw(batch, "MLB Showdown 2014", 10, 590);
-		for (Iterator<MenuItem> i = menuList.iterator(); i.hasNext(); ) {
-			MenuItem item = i.next();
-			if (item.isHighlighted()) {
-				aeroDisplayItalicFont36.setColor(Color.YELLOW);
-			} else {
-				aeroDisplayItalicFont36.setColor(Color.WHITE);
-			}
-			aeroDisplayItalicFont36.draw(batch, item.text, item.positionX, item.positionY);
-		}
-		
-	}
-	
-	private void processUserInput() {
-		if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
-			for (Iterator<MenuItem> i = menuList.iterator(); i.hasNext(); ) {
-				MenuItem item = i.next();
-				if (item.isHighlighted()) {
-					if (item.screen != null) {
-						sd.setScreen(item.screen);
-					}
-				}
-			}
-		}
-	}
 
 	@Override
 	public void resize(int width, int height) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void show() {
-		// TODO Auto-generated method stub
-		
+		Gdx.input.setInputProcessor(stage);
 	}
 
 	@Override
 	public void hide() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void pause() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void resume() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void dispose() {
-		aeroDisplayItalicFont72.dispose();
-		aeroDisplayItalicFont36.dispose();
-		batch.dispose();
 	}
-
-	public class MenuItem {
-		String text;
-		int positionX, positionY;
-		Screen screen;
-		
-		public MenuItem(String str, int y, Screen scrn) {
-			this.text = str;
-			this.positionX = 50;
-			this.positionY = y;
-			this.screen = scrn;
-		}
-		
-		public MenuItem(String str, int y) {
-			this.text = str;
-			this.positionX = 50;
-			this.positionY = y;
-			this.screen = null;
-		}
-		
-		public boolean isHighlighted() {
-			int posX = Gdx.input.getX();
-			int posY = Gdx.graphics.getHeight() - Gdx.input.getY();
-			TextBounds bounds = aeroDisplayItalicFont36.getBounds(this.text);
-			if (posX >= this.positionX && posX <= this.positionX + bounds.width &&
-					posY <= this.positionY && posY >= (this.positionY - bounds.height)) {
-				return true;
-			}
-			return false;
-		}
-		
-		public void onClick() {
-			
-		}
+	
+	public void addActorsToStage() {
+	   Image background = new Image(sd.fieldTexture);
+	   background.setColor(new Color(1f, 1f, 1f, .5f));
+	   stage.addActor(background);
+	   
+	   Label menuTitle = new Label("MLB Showdown 2014", sd.skin.get("aero72", LabelStyle.class));
+	   menuTitle.setAlignment(Align.left);
+	   menuTitle.setPosition(10, 518);
+	   stage.addActor(menuTitle);
+	   
+	   TextButton exhibitionButton = new TextButton("Exhibition", sd.skin.get("aero36", TextButtonStyle.class));
+	   exhibitionButton.addListener(new ClickListener() {
+	      @Override
+	      public void clicked(InputEvent event, float x, float y) {
+	         sd.setScreen(new ExhibitionMenu(sd));
+	      }
+	   });
+	   
+	   TextButton seasonButton = new TextButton("Season", sd.skin.get("aero36", TextButtonStyle.class));
+	   seasonButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+         }
+      });
+	   
+	   TextButton tournamentButton = new TextButton("Tournament", sd.skin.get("aero36", TextButtonStyle.class));
+	   tournamentButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+         }
+      });
+      
+      TextButton managementButton = new TextButton("Management", sd.skin.get("aero36", TextButtonStyle.class));
+      managementButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+         }
+      });
+      
+      TextButton statisticsButton = new TextButton("Statistics", sd.skin.get("aero36", TextButtonStyle.class));
+      statisticsButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+         }
+      });
+      
+      TextButton settingsButton = new TextButton("Settings", sd.skin.get("aero36", TextButtonStyle.class));
+      settingsButton.addListener(new ClickListener() {
+         @Override
+         public void clicked(InputEvent event, float x, float y) {
+         }
+      });
+	   
+	   Table buttonTable = new Table();
+	   buttonTable.align(Align.left);
+	   buttonTable.setPosition(50, 350);
+	   buttonTable.add(exhibitionButton).height(50).left();
+	   buttonTable.row();
+	   buttonTable.add(seasonButton).height(50).left();
+	   buttonTable.row();
+	   buttonTable.add(tournamentButton).height(50).left();
+	   buttonTable.row();
+	   buttonTable.add(managementButton).height(50).left();
+	   buttonTable.row();
+	   buttonTable.add(statisticsButton).height(50).left();
+	   buttonTable.row();
+	   buttonTable.add(settingsButton).height(50).left();
+	   stage.addActor(buttonTable);
 	}
 }

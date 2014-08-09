@@ -42,7 +42,7 @@ public class CardConstants {
 	};
 	public static BitmapFont NAME_FONT = MLBShowdown.getMuroslantFont(39);
 	public static BitmapFont CHART_FONT = MLBShowdown.getUS101Font(18);
-	public static BitmapFont CARDNUM_FONT = MLBShowdown.getUS101Font(15);
+	public static BitmapFont CARDNUM_FONT = MLBShowdown.getUS101Font(16);
 	public static BitmapFont CONTROL_FONT = MLBShowdown.getMuroFont(40);
 	public static BitmapFont ONBASE_FONT = MLBShowdown.getMuroFont(45);
    
@@ -280,7 +280,7 @@ public class CardConstants {
       String position1String = card.pos1 + " + " + card.posBonus1;
       CardConstants.CHART_FONT.draw(batch, position1String, ctx, cty);
 
-      if (card.pos2 != null) {
+      if (card.pos2 != null && !card.pos2.isEmpty()) {
          ctx += (int) CardConstants.CHART_FONT.getBounds(position1String).width + 20;
          String position2String = card.pos2 + " + " + card.posBonus2;
          CardConstants.CHART_FONT.draw(batch, position2String, ctx, cty);
@@ -371,24 +371,28 @@ public class CardConstants {
       int ntx, nty; // Name Text X and Y Positions
       ntx = 105;
       nty = 186;
-      CardConstants.NAME_FONT.setColor(Color.RED);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx - 1, nty);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx - 1, nty - 1);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx + 1, nty);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx - 1, nty + 1);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx, nty + 1);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx + 1, nty - 1);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx, nty - 1);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx + 1, nty + 1);
-      CardConstants.NAME_FONT.setColor(Color.WHITE);
-      CardConstants.NAME_FONT.draw(batch, card.name, ntx, nty);
+      BitmapFont font = CardConstants.NAME_FONT;
+      while (font.getBounds(card.name).width > (400 - ntx)) {
+         font = MLBShowdown.getMuroslantFont((int)(font.getLineHeight() - 3));
+      }
+      font.setColor(Color.RED);
+      font.draw(batch, card.name, ntx - 1, nty);
+      font.draw(batch, card.name, ntx - 1, nty - 1);
+      font.draw(batch, card.name, ntx + 1, nty);
+      font.draw(batch, card.name, ntx - 1, nty + 1);
+      font.draw(batch, card.name, ntx, nty + 1);
+      font.draw(batch, card.name, ntx + 1, nty - 1);
+      font.draw(batch, card.name, ntx, nty - 1);
+      font.draw(batch, card.name, ntx + 1, nty + 1);
+      font.setColor(Color.WHITE);
+      font.draw(batch, card.name, ntx, nty);
    }
 
    private static void createCardNumText(SpriteBatch batch, Card card) {
       // Draw the year and the card number
       if (card.cardnum != 0) {
          int ctx = 420;
-         int cty = 73;
+         int cty = 74;
          String cardnumString = Integer.toString(card.cardnum);
          String yearString = cardnumString.substring(0, 2);
          String numString = cardnumString.substring(2, 5);
@@ -398,16 +402,7 @@ public class CardConstants {
    }
 
    private static void createTeamLogo(SpriteBatch batch, Card card) {
-      Texture tex = null;
-      if (card.rarity.equals("P")) {
-         tex = CardConstants.TEAM_LOGOS_GOLD_TEXTURE;
-      } else {
-         tex = CardConstants.TEAM_LOGOS_TEXTURE;
-      }
-      int index = MLBShowdown.getTeamNamesList().indexOf(card.team) + 1;
-      int row = (int) Math.ceil((float) index / 6f);
-      int col = index - (row - 1) * 6;
-      Sprite logo = new Sprite(tex, 200 * (col - 1), 200 * (row - 1), 200, 200);
+      Sprite logo = MLBShowdown.getLogo(card.team, card.rarity);
       logo.setScale(.4f);
       logo.setPosition(340, 100);
       logo.draw(batch);

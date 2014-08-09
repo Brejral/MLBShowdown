@@ -44,6 +44,7 @@ public class Game {
    public boolean checkForDoublePlay = false, checkForAdvancement = false;
    public boolean checkForAdvancementRunner2 = false, checkForAdvancementRunner3 = false;
    public boolean addScoreToGameLog = false;
+   public boolean validateTeams = false;
 
    /**
     * Creates a new game
@@ -53,14 +54,14 @@ public class Game {
     * @param assetManager
     *           - the asset manager
     */
-   public Game(MLBShowdown showdown, AssetManager assetManager) {
+   public Game(MLBShowdown showdown, AssetManager assetManager, String awayTeam, String homeTeam) {
       sd = showdown;
       manager = assetManager;
       db = sd.db;
       rand = new Random(System.currentTimeMillis());
-      TeamParameter param = new TeamParameter(sd, sd.user, "Mariners");
+      TeamParameter param = new TeamParameter(sd, sd.user, awayTeam);
       manager.load("Away Team", Team.class, param);
-      param = new TeamParameter(sd, new User(sd, true), "Angels");
+      param = new TeamParameter(sd, new User(sd, true), homeTeam);
       manager.load("Home Team", Team.class, param);
       statKeeper = new StatKeeper(this);
       awayScorePerInning.add(0);
@@ -75,7 +76,7 @@ public class Game {
     * Set the game's starting parameters
     */
    public void startGame() {
-      statKeeper.setUpArraysForGame();
+      statKeeper.setUpStatsForGame();
       setBatter();
       setPitcher();
       stage.setLineupHighlight();
@@ -1013,6 +1014,13 @@ public class Game {
          } else {
             homeScorePerInning.add(0);
          }
+         if (validateTeams) {
+            validateTeams = false;
+            if (homeTeam.validateLineup() || awayTeam.validateLineup()) {
+               GameMenu menu = new GameMenu(sd.skin, this, "Subs");
+               stage.addActor(menu);
+            }
+         }
          gameLog.append("\n" + getInningText() + "\n\n");
          setPitcher();
       }
@@ -1075,7 +1083,7 @@ public class Game {
          homeHits++;
       }
    }
-
+   
    public boolean isFieldingTeamCpu() {
       return (isTop && !sd.user.equals(homeTeam.user)) || (!isTop && !sd.user.equals(awayTeam.user));
    }
@@ -1161,5 +1169,14 @@ public class Game {
          return homeTeam;
       }
       return null;
+   }
+
+   public void updateGameFromSubstitutions(Integer runner1Num, Integer runner2Num, Integer runner3Num) {
+      setPitcher();
+      batter.setCardInfo(isTop ? awayTeam.lineup.get(awayTeam.lineupSpot) : homeTeam.lineup.get(homeTeam.lineupSpot));
+      if (runner1Num != null) runner1.setCardInfo(isTop ? awayTeam.lineup.get(runner1Num) : homeTeam.lineup.get(runner1Num));
+      if (runner2Num != null) runner1.setCardInfo(isTop ? awayTeam.lineup.get(runner2Num) : homeTeam.lineup.get(runner2Num));
+      if (runner3Num != null) runner1.setCardInfo(isTop ? awayTeam.lineup.get(runner3Num) : homeTeam.lineup.get(runner3Num));
+      stage.setLineupText();
    }
 }

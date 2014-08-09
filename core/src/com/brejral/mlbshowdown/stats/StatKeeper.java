@@ -9,6 +9,7 @@ import com.brejral.mlbshowdown.MLBShowdown;
 import com.brejral.mlbshowdown.card.Card;
 import com.brejral.mlbshowdown.card.CardActor;
 import com.brejral.mlbshowdown.game.Game;
+import com.brejral.mlbshowdown.team.Team;
 
 public class StatKeeper {
    Game game;
@@ -32,7 +33,7 @@ public class StatKeeper {
       seasonStats = new SeasonStats(sd);
    }
 
-   public void setUpArraysForGame() {
+   public void setUpStatsForGame() {
       for (Card card : game.awayTeam.lineup) {
          int order = game.awayTeam.lineup.indexOf(card) + 1;
          increaseStat(card, "ORDER1", order);
@@ -53,16 +54,44 @@ public class StatKeeper {
       increaseStat(game.awayTeam.positions.get(1), "PORDER");
       executeGameStatChanges();
    }
+   
+   public void setUpStatsForSubstitutions() {
+      for (Card card : game.awayTeam.lineup) {
+         if (getGameStat("G", card) != 1) {
+            int order = game.awayTeam.lineup.indexOf(card) + 1;
+            increaseStat(card, "G");
+            increaseStat(card, "ORDER1", order);
+            increaseStat(card, "ORDER2", nextOrder2(game.awayTeam, order));
+         }
+      }
+      for (Card card : game.homeTeam.lineup) {
+         if (getGameStat("G", card) != 1) {
+            int order = game.homeTeam.lineup.indexOf(card) + 1;
+            increaseStat(card, "G");
+            increaseStat(card, "ORDER1", order);
+            increaseStat(card, "ORDER2", nextOrder2(game.homeTeam, order));
+         }
+      }
+      if (getGameStat("G", game.awayTeam.positions.get(1)) != 1) {
+         increaseStat(game.awayTeam.positions.get(1), "G");
+         increaseStat(game.awayTeam.positions.get(1), "PORDER", nextPOrder(game.awayTeam));
+      }
+      if (getGameStat("G", game.homeTeam.positions.get(1)) != 1) {
+         increaseStat(game.homeTeam.positions.get(1), "G");
+         increaseStat(game.homeTeam.positions.get(1), "PORDER", nextPOrder(game.homeTeam));
+      }
+      executeGameStatChanges();
+   }
 
-   public int getGameStat(String col, CardActor card) {
+   public static int getGameStat(String col, Card card) {
+      return card.getGameStat(col);
+   }
+
+   public int getSeasonStat(String col, Card card) {
       return 0;
    }
 
-   public int getSeasonStat(String col, CardActor card) {
-      return 0;
-   }
-
-   public int getCareerStat(String col, CardActor card) {
+   public int getCareerStat(String col, Card card) {
       return 0;
    }
 
@@ -104,6 +133,29 @@ public class StatKeeper {
       return update;
    }
 
+   public static int nextPOrder(Team team) {
+      int pOrder = 0;
+      for (Card card : team.roster) {
+         int p = getGameStat("PORDER", card);
+         if (p > pOrder) {
+            pOrder = p;
+         }
+      }
+      return ++pOrder;
+   }
+   
+   public static int nextOrder2(Team team, int order1) {
+      int order2 = 0;
+      for (Card card : team.roster) {
+         int on1 = getGameStat("ORDER1", card);
+         int on2 = getGameStat("ORDER2", card);
+         if (on1 == order1 && on2 > order2) {
+            order2 = on2;
+         }
+      }
+      return ++order2;
+   }
+   
    public String getPitchingStat(int[] array, String col) {
       switch (col) {
       case "ERA":

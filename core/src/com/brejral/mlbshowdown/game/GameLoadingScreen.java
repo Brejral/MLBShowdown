@@ -23,12 +23,12 @@ public class GameLoadingScreen implements Screen {
    long timeStart;
    boolean renderedOnce = false;
 
-   public GameLoadingScreen(MLBShowdown showdown) {
+   public GameLoadingScreen(MLBShowdown showdown, String awayTeam, String homeTeam) {
       timeStart = System.currentTimeMillis();
       sd = showdown;
       manager = new AssetManager();
       manager.setLoader(Team.class, new TeamLoader(new InternalFileHandleResolver()));
-      game = new Game(sd, manager);
+      game = new Game(sd, manager, awayTeam, homeTeam);
       batch = new SpriteBatch();
       font = MLBShowdown.getAeroItalicFont(70);
    }

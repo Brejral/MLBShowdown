@@ -47,7 +47,7 @@ public class Team {
    private void getTeamDataFromDB() {
       DatabaseCursor cursor = null;
       try {
-         StringBuilder query = new StringBuilder("Select * from teams where nickname = '" + nickName + "';");
+         StringBuilder query = new StringBuilder("SELECT * FROM TEAMS WHERE NICKNAME = '" + nickName + "';");
          cursor = db.rawQuery(query.toString());
          fullName = cursor.getString(1);
          location = cursor.getString(2);
@@ -55,36 +55,22 @@ public class Team {
          isNL = cursor.getInt(10) > 0 ? true : false;
 
          // Get Roster
-         String str = cursor.getString(4);
-         rosterNums = Arrays.asList(str.split(","));
-
-         // Get Lineup
-         str = cursor.getString(5);
-         lineupNums = Arrays.asList(str.split(","));
-
-         // Get Pitching Rotation
-         str = cursor.getString(6);
-         rotationNums = Arrays.asList(str.split(","));
-
-         // Get Positions
-         str = cursor.getString(7);
-         positionsNums = Arrays.asList(str.split(","));
+         rosterNums = Arrays.asList(cursor.getString(4).split(";"));
+         lineupNums = Arrays.asList(cursor.getString(5).split(";"));
+         rotationNums = Arrays.asList(cursor.getString(6).split(";"));
+         positionsNums = Arrays.asList(cursor.getString(7).split(";"));
          rotationSpot = Integer.parseInt(positionsNums.get(1));
-         
-         str = cursor.getString(8);
-         benchNums = Arrays.asList(str.split(","));
-         
-         str = cursor.getString(9);
-         bullpenNums = Arrays.asList(str.split(","));
+         benchNums = Arrays.asList(cursor.getString(8).split(";"));
+         bullpenNums = Arrays.asList(cursor.getString(9).split(";"));
          
          isNL = cursor.getInt(10) > 0 ? true : false;
          
-         query = new StringBuilder("Select * from cards where ");
+         query = new StringBuilder("SELECT * FROM CARDS WHERE ");
 
          for (String num : rosterNums) {
-            query.append("id = "+num+ " ");
+            query.append("CARDNUM = "+num+ " ");
             if (rosterNums.indexOf(num) != rosterNums.size() - 1) {
-               query.append("or ");
+               query.append("OR ");
             }
          }
          query.append(";");
@@ -98,9 +84,9 @@ public class Team {
    }
    
    private Card getCardInfoFromRoster(String num) {
-      int id = Integer.parseInt(num);
+      int cardnum = Integer.parseInt(num);
       for (Card info : roster) {
-         if (info.id == id) {
+         if (info.cardnum == cardnum) {
             return info;
          }
       }
@@ -139,7 +125,11 @@ public class Team {
    }
 
    public String getPosition(Card card) {
-      int i = positions.indexOf(card);
+      return getPosition(card, positions);
+   }
+   
+   public static String getPosition(Card card, List<Card> positionsList) {
+      int i = positionsList.indexOf(card);
       String pos = CardConstants.POSITION_TEXT[i];
       return pos;
    }
@@ -189,7 +179,7 @@ public class Team {
    public List<Card> getBattingStats() {
       List<Card> batters = new ArrayList<>();
       for (Card cardInfo : roster) {
-         if (cardInfo.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER1")] > 0) {
+         if (cardInfo.getGameStat("ORDER1") > 0) {
             batters.add(cardInfo);
          }
       }
@@ -199,24 +189,37 @@ public class Team {
 
    public List<Card> getPitchingStats() {
       List<Card> pitchers = new ArrayList<>();
-      for (Card cardInfo : roster) {
-         if (cardInfo.gameStats[MLBShowdown.GAME_STATS.indexOf("PORDER")] > 0) {
-            pitchers.add(cardInfo);
+      for (Card card : roster) {
+         if (card.getGameStat("PORDER") > 0) {
+            pitchers.add(card);
          }
       }
       pitchers.sort(new StatComparator("Pitching"));
       return pitchers;
    }
 
-   public Card getCardInfoForId(int id) {
-      for (Card cardInfo : roster) {
-         if (cardInfo.id == id) {
-            return cardInfo;
+   public Card getCardInfoForId(int cardnum) {
+      for (Card card : roster) {
+         if (card.cardnum == cardnum) {
+            return card;
          }
       }
       return null;
    }
-
+   
+   public boolean validateLineup() {
+      boolean isValidated = true;
+      for (int i = 0; i < lineup.size(); i++) {
+         Card card = lineup.get(i);
+         String position = Team.getPosition(card, positions);
+         if (!card.canPlayPosition(position)) {
+            isValidated = false;
+            break;
+         }
+      }
+      return isValidated;
+   }
+   
    public class StatComparator implements Comparator<Card> {
       String type;
 
@@ -227,12 +230,12 @@ public class Team {
       @Override
       public int compare(Card card1, Card card2) {
          if (type.equals("Pitching")) {
-            return card1.gameStats[MLBShowdown.GAME_STATS.indexOf("PORDER")] - card2.gameStats[MLBShowdown.GAME_STATS.indexOf("PORDER")];
+            return card1.getGameStat("PORDER") - card2.getGameStat("PORDER");
          } else if (type.equals("Batting")) {
-            if (card1.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER1")] == card2.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER1")]) {
-               return card1.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER2")] - card2.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER2")];
+            if (card1.getGameStat("ORDER1") == card2.getGameStat("ORDER1")) {
+               return card1.getGameStat("ORDER2") - card2.getGameStat("ORDER2");
             }
-            return card1.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER1")] - card2.gameStats[MLBShowdown.GAME_STATS.indexOf("ORDER1")];
+            return card1.getGameStat("ORDER1") - card2.getGameStat("ORDER1");
          }
          return 0;
       }

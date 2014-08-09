@@ -28,7 +28,7 @@ public class Stats {
 		sql.append(" WHERE");
 		for (Iterator<Card> iter = cards.iterator(); iter.hasNext(); ) {
 			Card card = iter.next();
-			sql.append(" CARDNUM = " + card.id);
+			sql.append(" CARDNUM = " + card.cardnum);
 			if (iter.hasNext()) {
 				sql.append(" OR");
 			}
@@ -59,7 +59,7 @@ public class Stats {
 					sql.append(", ");
 				}
 			}
-			sql.append(" WHERE CARDNUM = " + update.card.id + "; ");
+			sql.append(" WHERE CARDNUM = " + update.card.cardnum + "; ");
 		}
 		return sql.toString();
 	}

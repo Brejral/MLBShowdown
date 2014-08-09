@@ -556,17 +556,8 @@ public class GameStage extends Stage {
    }
 
    private void setupBoxScore(Tab boxScore) {
-      TabContainer container = boxScore.getContainer();
-      Table table = new Table();
-      ScrollPane scrollPane = new ScrollPane(table);
-      scrollPane.setScrollBarPositions(false, true);
-      scrollPane.setScrollingDisabled(true, false);
-      container.add(scrollPane).fill().expand();
-      scrollPane.setFillParent(true);
-      
       Table awayBatting = new Table();
       awayBatting.setName("Away Batting Stats Table");
-      table.add(awayBatting).pad(30);
       Label awayBattingLabel = new Label(game.awayTeam.nickName + " Batting", sd.skin, "aero20");
       awayBattingLabel.setName("Away Batting Label");
       awayBattingLabel.setColor(Color.WHITE);
@@ -587,7 +578,6 @@ public class GameStage extends Stage {
       
       Table homeBatting = new Table();
       homeBatting.setName("Home Batting Stats Table");
-      table.add(homeBatting).pad(30);
       Label homeBattingLabel = new Label(game.homeTeam.nickName + " Batting", sd.skin, "aero20");
       homeBattingLabel.setName("Home Batting Label");
       homeBattingLabel.setColor(Color.WHITE);
@@ -606,11 +596,9 @@ public class GameStage extends Stage {
          addBatterStatRow(homeBatting, "Home", i);
       }
       
-      table.row();
       
       Table awayPitching = new Table();
       awayPitching.setName("Away Pitching Stats Table");
-      table.add(awayPitching).pad(30);;
       Label awayPitchingLabel = new Label(game.awayTeam.nickName + " Pitching", sd.skin, "aero20");
       awayPitchingLabel.setName("Away Pitching Label");
       awayPitchingLabel.setColor(Color.WHITE);
@@ -629,7 +617,6 @@ public class GameStage extends Stage {
       
       Table homePitching = new Table();
       homePitching.setName("Home Pitching Stats Table");
-      table.add(homePitching).pad(30);;
       Label homePitchingLabel = new Label(game.homeTeam.nickName + " Pitching", sd.skin, "aero20");
       homePitchingLabel.setName("Home Pitching Label");
       homePitchingLabel.setColor(Color.WHITE);
@@ -645,6 +632,26 @@ public class GameStage extends Stage {
       }
       
       addPitcherStatRow(homePitching, "Home", 1);
+      
+      Table leftTable = new Table();
+      leftTable.add(awayBatting).pad(20).top();
+      leftTable.row();
+      leftTable.add(awayPitching).pad(20).top();
+      Table rightTable = new Table();
+      rightTable.add(homeBatting).pad(20).top();
+      rightTable.row();
+      rightTable.add(homePitching).pad(20).top();
+      Table table = new Table();
+      table.add(leftTable).expand().top();
+      table.add(rightTable).expand().top();
+      
+      TabContainer container = boxScore.getContainer();
+      ScrollPane scrollPane = new ScrollPane(table);
+      scrollPane.setScrollBarPositions(false, true);
+      scrollPane.setScrollingDisabled(true, false);
+      container.add(scrollPane).fill().expand();
+      scrollPane.setFillParent(true);
+      
    }
    
    private void setupGameLog(Tab gameLog) {
@@ -655,7 +662,7 @@ public class GameStage extends Stage {
       ScrollPane scrollPane = new ScrollPane(gameLogLabel);
       scrollPane.setScrollBarPositions(false, true);
       scrollPane.setScrollingDisabled(true, false);
-      container.add(scrollPane).fill().expand();
+      container.add(scrollPane).top().left().expand();
    }
    
    private void updateGameLog() {
@@ -693,13 +700,11 @@ public class GameStage extends Stage {
    private void updateBoxScoreStats() {
       // Away Batting
       List<Card> cards = game.awayTeam.getBattingStats();
-      int rows = ((Table)getRoot().findActor("Away Batting Stats Table")).getCells().size()/9;
-      int i = 1;
+      int rows = ((Table)getRoot().findActor("Away Batting Stats Table")).getCells().size()/9 - 1;
       while (cards.size() > rows) {
-         addBatterStatRow((Table)getRoot().findActor("Away Batting Stats Table"), "Away", rows + i);
-         i++;
+         addBatterStatRow((Table)getRoot().findActor("Away Batting Stats Table"), "Away", ++rows);
       }
-      i = 1;
+      int i = 1;
       for (Card card : cards) {
          updateBatterStatRow("Away", i, card);
          i++;
@@ -707,11 +712,9 @@ public class GameStage extends Stage {
       
       // Away Pitching
       cards = game.awayTeam.getPitchingStats();
-      rows = ((Table)getRoot().findActor("Away Pitching Stats Table")).getCells().size()/9;
-      i = 1;
+      rows = ((Table)getRoot().findActor("Away Pitching Stats Table")).getCells().size()/9 - 1;
       while (cards.size() > rows) {
-         addPitcherStatRow((Table)getRoot().findActor("Away Pitching Stats Table"), "Away", rows + i);
-         i++;
+         addPitcherStatRow((Table)getRoot().findActor("Away Pitching Stats Table"), "Away", ++rows);
       }
       i = 1;
       for (Card card : cards) {
@@ -721,11 +724,9 @@ public class GameStage extends Stage {
       
       // Home Batting
       cards = game.homeTeam.getBattingStats();
-      rows = ((Table)getRoot().findActor("Home Batting Stats Table")).getCells().size()/9;
-      i = 1;
+      rows = ((Table)getRoot().findActor("Home Batting Stats Table")).getCells().size()/9 - 1;
       while (cards.size() > rows) {
-         addBatterStatRow((Table)getRoot().findActor("Home Batting Stats Table"), "Home", rows + i);
-         i++;
+         addBatterStatRow((Table)getRoot().findActor("Home Batting Stats Table"), "Home", ++rows);
       }
       i = 1;
       for (Card card : cards) {
@@ -735,11 +736,9 @@ public class GameStage extends Stage {
       
       // Home Pitching
       cards = game.homeTeam.getPitchingStats();
-      rows = ((Table)getRoot().findActor("Home Pitching Stats Table")).getCells().size()/9;
-      i = 1;
+      rows = ((Table)getRoot().findActor("Home Pitching Stats Table")).getCells().size()/9 - 1;
       while (cards.size() > rows) {
-         addPitcherStatRow((Table)getRoot().findActor("Home Pitching Stats Table"), "Home", rows + i);
-         i++;
+         addPitcherStatRow((Table)getRoot().findActor("Home Pitching Stats Table"), "Home", ++rows);
       }
       i = 1;
       for (Card card : cards) {
@@ -751,7 +750,7 @@ public class GameStage extends Stage {
    private void updateBatterStatRow(String homeAway, int i, Card card) {
       Group scoreboard = (Group) getRoot().findActor("Scoreboard");
       Label name = (Label) scoreboard.findActor(homeAway + " Batting Name " + i);
-      name.setText(card.name);
+      name.setText((card.getGameStat("ORDER2") > 1 ? "     " : "") + card.name);
       for (String str : battingStats) {
          Label stat = (Label) scoreboard.findActor(homeAway + " Batting " + str + " " + i);
          stat.setText(game.statKeeper.getBattingStat(card.gameStats, str));
